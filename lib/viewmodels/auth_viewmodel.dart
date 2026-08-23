@@ -63,7 +63,6 @@ class AuthViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
-
   @override
   void dispose() {
     emailController.dispose();
