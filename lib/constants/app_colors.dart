@@ -6,7 +6,7 @@ class AppColors {
   static const Color primaryCyan = Color(0xFF00D2B5);
   static const Color darkNavy = Color(0xFF0A1E46);
   static const Color darkNavyDeep = Color(0xFF061129);
-  
+
   // Backgrounds
   static const Color scaffoldBackground = Color(0xFFF4F7FB);
   static const Color cardWhite = Color(0xFFFFFFFF);
@@ -38,47 +38,30 @@ class AppColors {
   static const LinearGradient authHeaderGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [
-      Color(0xFF040A1A),
-      Color(0xFF0A224E),
-      Color(0xFF06132D),
-    ],
+    colors: [Color(0xFF040A1A), Color(0xFF0A224E), Color(0xFF06132D)],
   );
 
   static const LinearGradient dashboardHeaderGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0xFF08183A),
-      Color(0xFF0C2C69),
-      Color(0xFF1246A3),
-    ],
+    colors: [Color(0xFF08183A), Color(0xFF0C2C69), Color(0xFF1246A3)],
   );
 
   static const LinearGradient primaryButtonGradient = LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
-    colors: [
-      Color(0xFF1D4ED8),
-      Color(0xFF00D2B5),
-    ],
+    colors: [Color(0xFF1D4ED8), Color(0xFF00D2B5)],
   );
 
   static const LinearGradient reportLostGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0xFFFF5252),
-      Color(0xFFE11D48),
-    ],
+    colors: [Color(0xFFFF5252), Color(0xFFE11D48)],
   );
 
   static const LinearGradient reportFoundGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color(0xFF10B981),
-      Color(0xFF059669),
-    ],
+    colors: [Color(0xFF10B981), Color(0xFF059669)],
   );
 }

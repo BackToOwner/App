@@ -58,18 +58,18 @@ class _DashboardHomeView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Quick Actions Section
-                _buildQuickActionsSection(context),
-                const SizedBox(height: 22),
+                // Top Section: Side-by-Side Lost Item and Found Item Cards with Category Grid & Dynamic Summary
+                const _TopCategoryExplorerWidget(),
+                const SizedBox(height: 24),
 
-                // Redesigned Recent Reports Section with Lost & Found Cards & Category Summary
-                const _RecentReportsWidget(),
+                // Quick Actions Section (Report Lost / Report Found Modals)
+                _buildQuickActionsSection(context),
                 const SizedBox(height: 24),
               ],
             ),
           ),
 
-          // Header & Stats Section moved to the VERY BOTTOM
+          // Bottom Header & Stats Section (Greeting & Statistics Cards)
           _buildBottomHeaderAndStats(context, viewModel),
         ],
       ),
@@ -216,7 +216,7 @@ class _DashboardHomeView extends StatelessWidget {
               ),
               const SizedBox(height: 22),
 
-              // Stats Row (3 Cards) - Search Bar Removed
+              // Stats Row (3 Cards)
               Row(
                 children: [
                   StatsCard(
@@ -257,15 +257,16 @@ class _DashboardHomeView extends StatelessWidget {
   }
 }
 
-class _RecentReportsWidget extends StatefulWidget {
-  const _RecentReportsWidget();
+/// Top Section Feature: Side-by-Side 'Lost Item' and 'Found Item' Cards with Category Grid & Dynamic Summary
+class _TopCategoryExplorerWidget extends StatefulWidget {
+  const _TopCategoryExplorerWidget();
 
   @override
-  State<_RecentReportsWidget> createState() => _RecentReportsWidgetState();
+  State<_TopCategoryExplorerWidget> createState() => _TopCategoryExplorerWidgetState();
 }
 
-class _RecentReportsWidgetState extends State<_RecentReportsWidget> {
-  ReportType _selectedTab = ReportType.lost;
+class _TopCategoryExplorerWidgetState extends State<_TopCategoryExplorerWidget> {
+  ReportType _activeMode = ReportType.lost;
   String _selectedCategoryEmoji = 'ALL';
 
   final List<Map<String, String>> _categories = const [
@@ -283,187 +284,173 @@ class _RecentReportsWidgetState extends State<_RecentReportsWidget> {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<DashboardViewModel>();
-    final isLostTab = _selectedTab == ReportType.lost;
+    final isLost = _activeMode == ReportType.lost;
 
-    // Filter reports by selected tab (Lost or Found) and selected category
-    final itemsForTab = isLostTab ? viewModel.lostReports : viewModel.foundReports;
-    final filteredCategoryItems = _selectedCategoryEmoji == 'ALL'
-        ? itemsForTab
-        : itemsForTab.where((item) => item.emojiIcon == _selectedCategoryEmoji).toList();
+    // Filter reports by active mode (Lost / Found) and selected category emoji
+    final modeReports = isLost ? viewModel.lostReports : viewModel.foundReports;
+    final summaryItems = _selectedCategoryEmoji == 'ALL'
+        ? modeReports
+        : modeReports.where((item) => item.emojiIcon == _selectedCategoryEmoji).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section Header (No "See all" button)
-        const SectionHeader(title: 'Recent Reports'),
-        const SizedBox(height: 14),
+        const SectionHeader(title: 'Category Explorer'),
+        const SizedBox(height: 12),
 
-        // Two Main Distinct Cards / Tabs: "Lost" and "Found"
+        // 1. Two Primary Cards Side-by-Side: 'Lost Item' Card & 'Found Item' Card
         Row(
           children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedTab = ReportType.lost;
-                    _selectedCategoryEmoji = 'ALL';
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: isLostTab ? const Color(0xFFFFECEF) : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isLostTab ? AppColors.lostRedEnd : AppColors.borderColor,
-                      width: isLostTab ? 2 : 1,
-                    ),
-                    boxShadow: isLostTab
-                        ? [
-                            BoxShadow(
-                              color: AppColors.lostRedEnd.withAlpha(35),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            )
-                          ]
-                        : [],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('🥹 ', style: TextStyle(fontSize: 18)),
-                      Text(
-                        'Lost Items',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: isLostTab ? AppColors.lostRedEnd : AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            QuickActionCard(
+              title: 'Lost Item',
+              subtitle: 'Explore Lost Categories',
+              emojiIcon: '🥹',
+              gradient: AppColors.reportLostGradient,
+              onTap: () {
+                setState(() {
+                  _activeMode = ReportType.lost;
+                  _selectedCategoryEmoji = 'ALL';
+                });
+              },
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedTab = ReportType.found;
-                    _selectedCategoryEmoji = 'ALL';
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: !isLostTab ? const Color(0xFFE6F9F3) : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: !isLostTab ? AppColors.foundGreenEnd : AppColors.borderColor,
-                      width: !isLostTab ? 2 : 1,
-                    ),
-                    boxShadow: !isLostTab
-                        ? [
-                            BoxShadow(
-                              color: AppColors.foundGreenEnd.withAlpha(35),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            )
-                          ]
-                        : [],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('🎉 ', style: TextStyle(fontSize: 18)),
-                      Text(
-                        'Found Items',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: !isLostTab ? AppColors.foundGreenEnd : AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            const SizedBox(width: 14),
+            QuickActionCard(
+              title: 'Found Item',
+              subtitle: 'Explore Found Categories',
+              emojiIcon: '🎉',
+              gradient: AppColors.reportFoundGradient,
+              onTap: () {
+                setState(() {
+                  _activeMode = ReportType.found;
+                  _selectedCategoryEmoji = 'ALL';
+                });
+              },
             ),
           ],
         ),
         const SizedBox(height: 16),
 
-        // Category Images / Icons Row
-        Text(
-          isLostTab ? 'Filter Lost Categories:' : 'Filter Found Categories:',
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textSecondary,
+        // 2. Expandable Inner Panel / Grid featuring Selectable Category Images/Icons
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isLost ? const Color(0xFFFFF0F3) : const Color(0xFFF0FDF4),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: isLost ? AppColors.lostRedEnd.withAlpha(80) : AppColors.foundGreenEnd.withAlpha(80),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: (isLost ? AppColors.lostRedEnd : AppColors.foundGreenEnd).withAlpha(15),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: 64,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: _categories.length,
-            itemBuilder: (context, index) {
-              final cat = _categories[index];
-              final emoji = cat['emoji']!;
-              final label = cat['label']!;
-              final isSelected = _selectedCategoryEmoji == emoji;
-
-              return GestureDetector(
-                onTap: () => setState(() => _selectedCategoryEmoji = emoji),
-                child: Container(
-                  margin: const EdgeInsets.only(right: 10),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? (isLostTab ? AppColors.lostRedEnd : AppColors.foundGreenEnd)
-                        : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isSelected
-                          ? (isLostTab ? AppColors.lostRedEnd : AppColors.foundGreenEnd)
-                          : AppColors.borderColor,
-                      width: 1.2,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    isLost ? '🥹 Select Lost Category:' : '🎉 Select Found Category:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: isLost ? AppColors.lostRedEnd : AppColors.foundGreenEnd,
                     ),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        emoji == 'ALL' ? '🌐' : emoji,
-                        style: const TextStyle(fontSize: 18),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: (isLost ? AppColors.lostRedEnd : AppColors.foundGreenEnd).withAlpha(20),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${summaryItems.length} Items',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isLost ? AppColors.lostRedEnd : AppColors.foundGreenEnd,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        label,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: isSelected ? Colors.white : AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Category Selector Row
+              SizedBox(
+                height: 72,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _categories.length,
+                  itemBuilder: (context, index) {
+                    final cat = _categories[index];
+                    final emoji = cat['emoji']!;
+                    final label = cat['label']!;
+                    final isSelected = _selectedCategoryEmoji == emoji;
+                    final activeThemeColor = isLost ? AppColors.lostRedEnd : AppColors.foundGreenEnd;
+
+                    return GestureDetector(
+                      onTap: () => setState(() => _selectedCategoryEmoji = emoji),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.only(right: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected ? activeThemeColor : Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: isSelected ? activeThemeColor : AppColors.borderColor,
+                            width: isSelected ? 2 : 1,
+                          ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: activeThemeColor.withAlpha(40),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ]
+                              : [],
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              emoji == 'ALL' ? '🌐' : emoji,
+                              style: const TextStyle(fontSize: 20),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              label,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: isSelected ? Colors.white : AppColors.textPrimary,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
-              );
-            },
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
 
-        // Summary List of Selected Category Items
-        if (filteredCategoryItems.isEmpty)
+        // 3. Dynamic Summary List below displaying lost/found items in selected category
+        if (summaryItems.isEmpty)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
@@ -473,11 +460,11 @@ class _RecentReportsWidgetState extends State<_RecentReportsWidget> {
               children: [
                 Text(
                   _selectedCategoryEmoji == 'ALL' ? '🔍' : _selectedCategoryEmoji,
-                  style: const TextStyle(fontSize: 32),
+                  style: const TextStyle(fontSize: 36),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Text(
-                  'No ${isLostTab ? "lost" : "found"} items in this category yet.',
+                  'No ${isLost ? "lost" : "found"} items in this category currently.',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 14,
@@ -492,9 +479,9 @@ class _RecentReportsWidgetState extends State<_RecentReportsWidget> {
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: filteredCategoryItems.length,
+            itemCount: summaryItems.length,
             itemBuilder: (context, index) {
-              final item = filteredCategoryItems[index];
+              final item = summaryItems[index];
               return ReportItemCard(
                 item: item,
                 onTap: () => ItemDetailModal.show(context, item),
@@ -505,3 +492,4 @@ class _RecentReportsWidgetState extends State<_RecentReportsWidget> {
     );
   }
 }
+
