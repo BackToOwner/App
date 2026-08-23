@@ -5,7 +5,6 @@ import '../models/report_item.dart';
 import '../viewmodels/dashboard_viewmodel.dart';
 import '../widgets/custom_bottom_nav.dart';
 import '../widgets/item_detail_modal.dart';
-import '../widgets/map_placeholder.dart';
 import '../widgets/quick_action_card.dart';
 import '../widgets/report_item_card.dart';
 import '../widgets/report_item_modal.dart';
@@ -54,11 +53,8 @@ class _DashboardHomeView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Curved Dark Blue Top Header Area
-          _buildHeader(context, viewModel),
-
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -66,37 +62,66 @@ class _DashboardHomeView extends StatelessWidget {
                 _buildQuickActionsSection(context),
                 const SizedBox(height: 22),
 
-                // Nearby Items Section
-                _buildNearbyItemsSection(context),
-                const SizedBox(height: 22),
-
-                // Recent Reports Section & Filters
-                _buildRecentReportsSection(context, viewModel),
+                // Redesigned Recent Reports Section with Lost & Found Cards & Category Summary
+                const _RecentReportsWidget(),
+                const SizedBox(height: 24),
               ],
             ),
           ),
+
+          // Header & Stats Section moved to the VERY BOTTOM
+          _buildBottomHeaderAndStats(context, viewModel),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, DashboardViewModel viewModel) {
+  Widget _buildQuickActionsSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SectionHeader(title: 'Quick Actions'),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            QuickActionCard(
+              title: 'Report Lost',
+              subtitle: 'Lost something?',
+              emojiIcon: '🥹',
+              gradient: AppColors.reportLostGradient,
+              onTap: () => ReportItemModal.show(context, initialType: ReportType.lost),
+            ),
+            const SizedBox(width: 14),
+            QuickActionCard(
+              title: 'Report Found',
+              subtitle: 'Found something?',
+              emojiIcon: '🎉',
+              gradient: AppColors.reportFoundGradient,
+              onTap: () => ReportItemModal.show(context, initialType: ReportType.found),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBottomHeaderAndStats(BuildContext context, DashboardViewModel viewModel) {
     return Container(
       decoration: const BoxDecoration(
         gradient: AppColors.dashboardHeaderGradient,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
             color: Color(0x330B2252),
             blurRadius: 20,
-            offset: Offset(0, 10),
+            offset: Offset(0, -6),
           ),
         ],
       ),
       child: SafeArea(
-        bottom: false,
+        top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -137,7 +162,7 @@ class _DashboardHomeView extends StatelessWidget {
                   ),
                   const Spacer(),
 
-                  // Bell Notification Button with Dot
+                  // Bell Notification Button
                   Stack(
                     children: [
                       Container(
@@ -189,40 +214,9 @@ class _DashboardHomeView extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 22),
 
-              // Search Bar
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(22),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.white.withAlpha(35),
-                    width: 1,
-                  ),
-                ),
-                child: TextField(
-                  onChanged: viewModel.setSearchQuery,
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: 'Search lost or found items...',
-                    hintStyle: TextStyle(
-                      color: Colors.white.withAlpha(160),
-                      fontSize: 14,
-                    ),
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: Colors.white.withAlpha(180),
-                      size: 20,
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Stats Row (3 Cards)
+              // Stats Row (3 Cards) - Search Bar Removed
               Row(
                 children: [
                   StatsCard(
@@ -261,113 +255,246 @@ class _DashboardHomeView extends StatelessWidget {
       child: Icon(icon, color: Colors.white, size: 14),
     );
   }
+}
 
-  Widget _buildQuickActionsSection(BuildContext context) {
+class _RecentReportsWidget extends StatefulWidget {
+  const _RecentReportsWidget();
+
+  @override
+  State<_RecentReportsWidget> createState() => _RecentReportsWidgetState();
+}
+
+class _RecentReportsWidgetState extends State<_RecentReportsWidget> {
+  ReportType _selectedTab = ReportType.lost;
+  String _selectedCategoryEmoji = 'ALL';
+
+  final List<Map<String, String>> _categories = const [
+    {'emoji': 'ALL', 'label': 'All'},
+    {'emoji': '👛', 'label': 'Wallets'},
+    {'emoji': '📱', 'label': 'Phones'},
+    {'emoji': '🐕', 'label': 'Pets'},
+    {'emoji': '🔑', 'label': 'Keys'},
+    {'emoji': '🎒', 'label': 'Bags'},
+    {'emoji': '🎧', 'label': 'Audio'},
+    {'emoji': '💻', 'label': 'Laptops'},
+    {'emoji': '🕶️', 'label': 'Glasses'},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = context.watch<DashboardViewModel>();
+    final isLostTab = _selectedTab == ReportType.lost;
+
+    // Filter reports by selected tab (Lost or Found) and selected category
+    final itemsForTab = isLostTab ? viewModel.lostReports : viewModel.foundReports;
+    final filteredCategoryItems = _selectedCategoryEmoji == 'ALL'
+        ? itemsForTab
+        : itemsForTab.where((item) => item.emojiIcon == _selectedCategoryEmoji).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(title: 'Quick Actions'),
-        const SizedBox(height: 12),
+        // Section Header (No "See all" button)
+        const SectionHeader(title: 'Recent Reports'),
+        const SizedBox(height: 14),
+
+        // Two Main Distinct Cards / Tabs: "Lost" and "Found"
         Row(
           children: [
-            QuickActionCard(
-              title: 'Report Lost',
-              subtitle: 'Lost something?',
-              emojiIcon: '🥹',
-              gradient: AppColors.reportLostGradient,
-              onTap: () => ReportItemModal.show(context, initialType: ReportType.lost),
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedTab = ReportType.lost;
+                    _selectedCategoryEmoji = 'ALL';
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: isLostTab ? const Color(0xFFFFECEF) : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isLostTab ? AppColors.lostRedEnd : AppColors.borderColor,
+                      width: isLostTab ? 2 : 1,
+                    ),
+                    boxShadow: isLostTab
+                        ? [
+                            BoxShadow(
+                              color: AppColors.lostRedEnd.withAlpha(35),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            )
+                          ]
+                        : [],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('🥹 ', style: TextStyle(fontSize: 18)),
+                      Text(
+                        'Lost Items',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: isLostTab ? AppColors.lostRedEnd : AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(width: 14),
-            QuickActionCard(
-              title: 'Report Found',
-              subtitle: 'Found something?',
-              emojiIcon: '🎉',
-              gradient: AppColors.reportFoundGradient,
-              onTap: () => ReportItemModal.show(context, initialType: ReportType.found),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNearbyItemsSection(BuildContext context) {
-    return Column(
-      children: [
-        SectionHeader(
-          title: 'Nearby Items',
-          actionLabel: 'View Map',
-          onActionTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Opening Interactive Map View...')),
-            );
-          },
-        ),
-        const SizedBox(height: 12),
-        const MapPlaceholderWidget(),
-      ],
-    );
-  }
-
-  Widget _buildRecentReportsSection(BuildContext context, DashboardViewModel viewModel) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(
-          title: 'Recent Reports',
-          actionLabel: 'See all',
-          onActionTap: () {},
-        ),
-        const SizedBox(height: 12),
-
-        // Filter Pills Row (All / Lost / Found)
-        Row(
-          children: [
-            _buildFilterPill(
-              context,
-              label: 'All',
-              type: ReportType.all,
-              selected: viewModel.selectedFilter == ReportType.all,
-              onTap: () => viewModel.setFilter(ReportType.all),
-            ),
-            const SizedBox(width: 10),
-            _buildFilterPill(
-              context,
-              label: '🥹 Lost',
-              type: ReportType.lost,
-              selected: viewModel.selectedFilter == ReportType.lost,
-              onTap: () => viewModel.setFilter(ReportType.lost),
-            ),
-            const SizedBox(width: 10),
-            _buildFilterPill(
-              context,
-              label: '🎉 Found',
-              type: ReportType.found,
-              selected: viewModel.selectedFilter == ReportType.found,
-              onTap: () => viewModel.setFilter(ReportType.found),
+            const SizedBox(width: 12),
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedTab = ReportType.found;
+                    _selectedCategoryEmoji = 'ALL';
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: !isLostTab ? const Color(0xFFE6F9F3) : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: !isLostTab ? AppColors.foundGreenEnd : AppColors.borderColor,
+                      width: !isLostTab ? 2 : 1,
+                    ),
+                    boxShadow: !isLostTab
+                        ? [
+                            BoxShadow(
+                              color: AppColors.foundGreenEnd.withAlpha(35),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            )
+                          ]
+                        : [],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('🎉 ', style: TextStyle(fontSize: 18)),
+                      Text(
+                        'Found Items',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: !isLostTab ? AppColors.foundGreenEnd : AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ],
         ),
         const SizedBox(height: 16),
 
-        // Reports ListView
-        if (viewModel.filteredReports.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(
-              child: Text(
-                'No report items match your search or filter.',
-                style: TextStyle(color: AppColors.textMuted, fontSize: 14),
-              ),
+        // Category Images / Icons Row
+        Text(
+          isLostTab ? 'Filter Lost Categories:' : 'Filter Found Categories:',
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 64,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: _categories.length,
+            itemBuilder: (context, index) {
+              final cat = _categories[index];
+              final emoji = cat['emoji']!;
+              final label = cat['label']!;
+              final isSelected = _selectedCategoryEmoji == emoji;
+
+              return GestureDetector(
+                onTap: () => setState(() => _selectedCategoryEmoji = emoji),
+                child: Container(
+                  margin: const EdgeInsets.only(right: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? (isLostTab ? AppColors.lostRedEnd : AppColors.foundGreenEnd)
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected
+                          ? (isLostTab ? AppColors.lostRedEnd : AppColors.foundGreenEnd)
+                          : AppColors.borderColor,
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        emoji == 'ALL' ? '🌐' : emoji,
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: isSelected ? Colors.white : AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Summary List of Selected Category Items
+        if (filteredCategoryItems.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.borderColor),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  _selectedCategoryEmoji == 'ALL' ? '🔍' : _selectedCategoryEmoji,
+                  style: const TextStyle(fontSize: 32),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'No ${isLostTab ? "lost" : "found"} items in this category yet.',
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           )
         else
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: viewModel.filteredReports.length,
+            itemCount: filteredCategoryItems.length,
             itemBuilder: (context, index) {
-              final item = viewModel.filteredReports[index];
+              final item = filteredCategoryItems[index];
               return ReportItemCard(
                 item: item,
                 onTap: () => ItemDetailModal.show(context, item),
@@ -375,34 +502,6 @@ class _DashboardHomeView extends StatelessWidget {
             },
           ),
       ],
-    );
-  }
-
-  Widget _buildFilterPill(
-    BuildContext context, {
-    required String label,
-    required ReportType type,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.primaryBlue : const Color(0xFFE2E8F0).withAlpha(180),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-            color: selected ? Colors.white : AppColors.textSecondary,
-          ),
-        ),
-      ),
     );
   }
 }

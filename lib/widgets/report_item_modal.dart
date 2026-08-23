@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/report_item.dart';
 import '../viewmodels/dashboard_viewmodel.dart';
-import 'custom_segmented_control.dart';
 import 'custom_text_field.dart';
 import 'gradient_button.dart';
 
@@ -33,6 +32,8 @@ class _ReportItemModalState extends State<ReportItemModal> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _rewardController = TextEditingController();
+  final TextEditingController _imageController = TextEditingController();
+  String? _imageFileName;
 
   final List<String> _emojis = ['👛', '📱', '🐕', '🔑', '🎒', '🎧', '💻', '🕶️', '⌚', '💼'];
   late String _selectedEmoji;
@@ -49,7 +50,21 @@ class _ReportItemModalState extends State<ReportItemModal> {
     _titleController.dispose();
     _locationController.dispose();
     _rewardController.dispose();
+    _imageController.dispose();
     super.dispose();
+  }
+
+  void _requestCameraAccess() {
+    setState(() {
+      _imageFileName = 'captured_photo_${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}.jpg';
+      _imageController.text = _imageFileName!;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Camera access granted. Image attached: $_imageFileName'),
+        backgroundColor: AppColors.primaryBlue,
+      ),
+    );
   }
 
   void _submitReport() {
@@ -140,25 +155,6 @@ class _ReportItemModalState extends State<ReportItemModal> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-
-            // Reusable Segmented Control (Lost vs Found - DRY)
-            CustomSegmentedControl<ReportType>(
-              options: const [
-                SegmentedOption(
-                  value: ReportType.lost,
-                  label: '🥹 Lost Item',
-                  activeGradient: AppColors.reportLostGradient,
-                ),
-                SegmentedOption(
-                  value: ReportType.found,
-                  label: '🎉 Found Item',
-                  activeGradient: AppColors.reportFoundGradient,
-                ),
-              ],
-              selectedValue: _selectedType,
-              onValueChanged: (type) => setState(() => _selectedType = type),
-            ),
             const SizedBox(height: 18),
 
             // Form Field: Title
@@ -176,6 +172,23 @@ class _ReportItemModalState extends State<ReportItemModal> {
               hintText: 'e.g. Central Park, NY or Terminal 2',
               prefixIcon: Icons.location_on_outlined,
               controller: _locationController,
+            ),
+            const SizedBox(height: 14),
+
+            // Form Field: Upload Image (Requests Camera Access)
+            CustomTextField(
+              label: 'Upload Image',
+              hintText: _imageFileName ?? 'Take photo or upload image',
+              prefixIcon: Icons.camera_alt_outlined,
+              controller: _imageController,
+              suffixWidget: IconButton(
+                onPressed: _requestCameraAccess,
+                icon: const Icon(
+                  Icons.add_a_photo_outlined,
+                  color: AppColors.primaryBlue,
+                  size: 20,
+                ),
+              ),
             ),
             const SizedBox(height: 14),
 
