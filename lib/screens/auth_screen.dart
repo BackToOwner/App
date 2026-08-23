@@ -205,7 +205,7 @@ class _AuthScreenContent extends StatelessWidget {
                                     'Password reset link requested.',
                                   ),
                                 ),
-                              ),
+                              );
                             },
                             child: const Text(
                               'Forgot password?',
