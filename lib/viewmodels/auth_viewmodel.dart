@@ -11,10 +11,15 @@ class AuthViewModel extends ChangeNotifier {
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  final TextEditingController emailController = TextEditingController(text: 'you@example.com');
+  final TextEditingController emailController = TextEditingController(
+    text: 'you@example.com',
+  );
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController phoneController = TextEditingController(text: '+94 71 234 5678');
-  final TextEditingController idVerificationController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController(
+    text: '+94 71 234 5678',
+  );
+  final TextEditingController idVerificationController =
+      TextEditingController();
 
   bool get isSignIn => _isSignIn;
   bool get obscurePassword => _obscurePassword;
@@ -39,8 +44,14 @@ class AuthViewModel extends ChangeNotifier {
 
     try {
       final success = _isSignIn
-          ? await _authService.signIn(emailController.text, passwordController.text)
-          : await _authService.signUp(emailController.text, passwordController.text);
+          ? await _authService.signIn(
+              emailController.text,
+              passwordController.text,
+            )
+          : await _authService.signUp(
+              emailController.text,
+              passwordController.text,
+            );
 
       if (success && context.mounted) {
         Navigator.of(context).pushReplacementNamed('/dashboard');
@@ -75,5 +86,3 @@ class AuthViewModel extends ChangeNotifier {
     super.dispose();
   }
 }
-
-
