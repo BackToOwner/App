@@ -13,6 +13,8 @@ class AuthViewModel extends ChangeNotifier {
 
   final TextEditingController emailController = TextEditingController(text: 'you@example.com');
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController(text: '+94 71 234 5678');
+  final TextEditingController idVerificationController = TextEditingController();
 
   bool get isSignIn => _isSignIn;
   bool get obscurePassword => _obscurePassword;
@@ -63,11 +65,15 @@ class AuthViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
   @override
   void dispose() {
     emailController.dispose();
     passwordController.dispose();
+    phoneController.dispose();
+    idVerificationController.dispose();
     super.dispose();
   }
 }
+
 

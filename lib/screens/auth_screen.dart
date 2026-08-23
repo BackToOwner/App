@@ -145,6 +145,36 @@ class _AuthScreenContent extends StatelessWidget {
                           prefixIcon: Icons.mail_outline,
                           controller: viewModel.emailController,
                         ),
+                        if (!viewModel.isSignIn) ...[
+                          const SizedBox(height: 18),
+                          CustomTextField(
+                            label: 'Phone Number',
+                            hintText: '+94 71 234 5678',
+                            prefixIcon: Icons.phone_outlined,
+                            controller: viewModel.phoneController,
+                          ),
+                          const SizedBox(height: 18),
+                          CustomTextField(
+                            label: 'ID Verification',
+                            hintText: 'Scan or upload your ID card',
+                            prefixIcon: Icons.badge_outlined,
+                            controller: viewModel.idVerificationController,
+                            suffixWidget: IconButton(
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('ID verification scanner initialized.'),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.camera_alt_outlined,
+                                color: AppColors.primaryBlue,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 18),
                         CustomTextField(
                           label: 'Password',
@@ -175,7 +205,7 @@ class _AuthScreenContent extends StatelessWidget {
                                     'Password reset link requested.',
                                   ),
                                 ),
-                              );
+                              ),
                             },
                             child: const Text(
                               'Forgot password?',
