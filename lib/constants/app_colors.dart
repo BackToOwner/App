@@ -19,12 +19,12 @@ class AppColors {
   static const Color textMuted = Color(0xFF94A3B8);
 
   // Status Badges & Quick Action Colors
-  static const Color lostRedStart = Color.fromARGB(255, 195, 154, 154);
-  static const Color lostRedEnd = Color.fromARGB(255, 106, 145, 169);
+  static const Color lostRedStart = Color(0xFFFF5252);
+  static const Color lostRedEnd = Color(0xFFE11D48);
   static const Color foundGreenStart = Color(0xFF10B981);
   static const Color foundGreenEnd = Color(0xFF059669);
   static const Color lostBadgeBg = Color(0xFFFFECEF);
-  static const Color lostBadgeText = Color.fromARGB(255, 75, 70, 71);
+  static const Color lostBadgeText = Color(0xFFE11D48);
   static const Color foundBadgeBg = Color(0xFFE6F9F3);
   static const Color foundBadgeText = Color(0xFF10B981);
   static const Color matchedBadgeBg = Color(0xFFE6F8F6);
@@ -56,10 +56,7 @@ class AppColors {
   static const LinearGradient reportLostGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      Color.fromARGB(255, 243, 168, 168),
-      Color.fromARGB(255, 227, 184, 194),
-    ],
+    colors: [lostRedStart, lostRedEnd],
   );
 
   static const LinearGradient reportFoundGradient = LinearGradient(

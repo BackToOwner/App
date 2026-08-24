@@ -60,17 +60,6 @@ class ProfileScreen extends StatelessWidget {
                 const SnackBar(content: Text('Opening My Reports...')),
               );
             }),
-            _buildProfileOption(
-              Icons.notifications_outlined,
-              'Notification Settings',
-              () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Opening Notification Settings...'),
-                  ),
-                );
-              },
-            ),
             _buildProfileOption(Icons.security, 'Privacy & Security', () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Opening Privacy & Security...')),

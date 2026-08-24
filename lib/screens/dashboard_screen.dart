@@ -5,15 +5,10 @@ import '../models/report_item.dart';
 import '../viewmodels/dashboard_viewmodel.dart';
 import '../widgets/custom_bottom_nav.dart';
 
-import '../widgets/item_detail_modal.dart';
-import '../widgets/quick_action_card.dart';
-import '../widgets/report_item_card.dart';
-
 import '../widgets/report_item_modal.dart';
-import '../widgets/section_header.dart';
-import '../widgets/stats_card.dart';
 import 'found_screen.dart';
 import 'lost_screen.dart';
+import 'notifications_screen.dart';
 import 'profile_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -66,8 +61,8 @@ class _DashboardHomeView extends StatelessWidget {
                 _buildQuickActionsSection(context),
                 const SizedBox(height: 28),
 
-                // 3. Category Explorer with Segmented Tabs & Category Chips
-                const _TopCategoryExplorerWidget(),
+                // 3. Browse Items (Lost Items / Found Items)
+                _buildBrowseItemsSection(context),
               ],
             ),
           ),
@@ -80,6 +75,13 @@ class _DashboardHomeView extends StatelessWidget {
   }
 
   // ─── HEADER ────────────────────────────────────────────────────────────────
+  String _greetingForNow() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning 👋';
+    if (hour < 17) return 'Good afternoon 👋';
+    return 'Good evening 👋';
+  }
+
   Widget _buildTopHeader(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
@@ -96,114 +98,95 @@ class _DashboardHomeView extends StatelessWidget {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Row: Logo + Greeting + Notification + Avatar
+              // Utility Row: Brand Mark + Notification + Avatar
               Row(
                 children: [
                   Container(
-                    width: 42,
-                    height: 42,
-                    padding: const EdgeInsets.all(6),
+                    width: 36,
+                    height: 36,
+                    padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
                       color: Colors.white.withAlpha(20),
-                      borderRadius: BorderRadius.circular(13),
+                      borderRadius: BorderRadius.circular(11),
                       border: Border.all(color: Colors.white.withAlpha(35), width: 1),
                     ),
                     child: Image.asset('assets/images/app_logo.png'),
                   ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Good morning 👋',
-                        style: TextStyle(
-                          color: Colors.white.withAlpha(180),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.2,
-                        ),
+                  const SizedBox(width: 10),
+                  const Text.rich(
+                    TextSpan(
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.2,
                       ),
-                      const SizedBox(height: 1),
-                      const Text(
-                        'Ahmed Khalid',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                    ],
+                      children: [
+                        TextSpan(text: 'Back', style: TextStyle(color: Colors.white)),
+                        TextSpan(text: 'To', style: TextStyle(color: AppColors.primaryCyan)),
+                        TextSpan(text: 'Owner', style: TextStyle(color: Colors.white)),
+                      ],
+                    ),
                   ),
                   const Spacer(),
 
                   // Notification Bell Button
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withAlpha(20),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white.withAlpha(30), width: 1),
-                    ),
-                    child: Center(
-                      child: Stack(
-                        children: [
-                          const Icon(Icons.notifications_outlined, color: Colors.white, size: 22),
-                          Positioned(
-                            right: 0,
-                            top: 0,
-                            child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFFF5C5C),
-                                shape: BoxShape.circle,
-                                border: Border.all(color: const Color(0xFF0C2C69), width: 1.5),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  _HeaderIconButton(
+                    icon: Icons.notifications_outlined,
+                    showBadge: true,
+                    tooltip: 'Notifications',
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                      );
+                    },
                   ),
                   const SizedBox(width: 10),
 
-                  // Avatar
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF00D2B5), Color(0xFF00A99D)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF00D2B5).withAlpha(80),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        )
-                      ],
+                  // Avatar — taps through to the Profile tab
+                  _HeaderIconButton(
+                    tooltip: 'Profile',
+                    onTap: () => context.read<DashboardViewModel>().setNavIndex(3),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF00D2B5), Color(0xFF00A99D)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    child: const Center(
-                      child: Text(
-                        'A',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                        ),
+                    child: const Text(
+                      'A',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 22),
+
+              // Greeting Block
+              Text(
+                _greetingForNow(),
+                style: TextStyle(
+                  color: Colors.white.withAlpha(180),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.2,
+                ),
+              ),
+              const SizedBox(height: 3),
+              const Text(
+                'Ahmed Khalid',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 25,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                ),
               ),
             ],
           ),
@@ -254,8 +237,8 @@ class _DashboardHomeView extends StatelessWidget {
               emoji: '🥹',
               title: 'Report Lost',
               subtitle: 'Lost an item?',
-              gradientColors: const [Color(0xFFFF5252), Color(0xFFE11D48)],
-              shadowColor: const Color(0xFFFF5252),
+              gradientColors: const [AppColors.lostRedStart, AppColors.lostRedEnd],
+              shadowColor: AppColors.lostRedEnd,
               onTap: () => ReportItemModal.show(context, initialType: ReportType.lost),
             ),
             const SizedBox(width: 14),
@@ -264,8 +247,8 @@ class _DashboardHomeView extends StatelessWidget {
               emoji: '🎉',
               title: 'Report Found',
               subtitle: 'Found an item?',
-              gradientColors: const [Color(0xFF10B981), Color(0xFF059669)],
-              shadowColor: const Color(0xFF10B981),
+              gradientColors: const [AppColors.foundGreenStart, AppColors.foundGreenEnd],
+              shadowColor: AppColors.foundGreenEnd,
               onTap: () => ReportItemModal.show(context, initialType: ReportType.found),
             ),
           ],
@@ -358,6 +341,113 @@ class _DashboardHomeView extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ─── BROWSE ITEMS ───────────────────────────────────────────────────────────
+  Widget _buildBrowseItemsSection(BuildContext context) {
+    final viewModel = context.watch<DashboardViewModel>();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Browse Items',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+            letterSpacing: -0.3,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            _buildBrowseTile(
+              icon: Icons.inventory_2_outlined,
+              title: 'Lost Items',
+              subtitle: '${viewModel.lostReports.length} reported',
+              themeColor: AppColors.lostRedEnd,
+              onTap: () => viewModel.setNavIndex(1),
+            ),
+            const SizedBox(width: 14),
+            _buildBrowseTile(
+              icon: Icons.task_alt_rounded,
+              title: 'Found Items',
+              subtitle: '${viewModel.foundReports.length} reported',
+              themeColor: AppColors.foundGreenEnd,
+              onTap: () => viewModel.setNavIndex(2),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBrowseTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color themeColor,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 110,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: themeColor.withAlpha(60), width: 1.4),
+            boxShadow: [
+              BoxShadow(
+                color: themeColor.withAlpha(25),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: themeColor.withAlpha(24),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: themeColor, size: 19),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: AppColors.darkNavy,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -473,312 +563,83 @@ class _DashboardHomeView extends StatelessWidget {
   }
 }
 
-/// Category Explorer Widget with 2 Expandable Cards (Lost Item & Found Item)
-/// Summary items are only shown INSIDE the expanded card, not directly on the front page.
-class _TopCategoryExplorerWidget extends StatefulWidget {
-  const _TopCategoryExplorerWidget();
+/// Circular header button used for the notification bell and avatar.
+/// Gives proper tactile ripple feedback on tap instead of a bare GestureDetector.
+class _HeaderIconButton extends StatelessWidget {
+  const _HeaderIconButton({
+    required this.onTap,
+    required this.tooltip,
+    this.icon,
+    this.gradient,
+    this.child,
+    this.showBadge = false,
+  });
 
-  @override
-  State<_TopCategoryExplorerWidget> createState() => _TopCategoryExplorerWidgetState();
-}
-
-class _TopCategoryExplorerWidgetState extends State<_TopCategoryExplorerWidget> {
-  String? _expandedCard; // null, 'lost', or 'found'
-  String _selectedCategoryEmoji = 'ALL';
-
-  final List<Map<String, String>> _categories = const [
-    {'emoji': 'ALL', 'label': 'All'},
-    {'emoji': '👛', 'label': 'Wallets'},
-    {'emoji': '📱', 'label': 'Phones'},
-    {'emoji': '🐕', 'label': 'Pets'},
-    {'emoji': '🔑', 'label': 'Keys'},
-    {'emoji': '🎒', 'label': 'Bags'},
-    {'emoji': '🎧', 'label': 'Audio'},
-    {'emoji': '💻', 'label': 'Laptops'},
-    {'emoji': '🕶️', 'label': 'Glasses'},
-  ];
+  final VoidCallback onTap;
+  final String tooltip;
+  final IconData? icon;
+  final LinearGradient? gradient;
+  final Widget? child;
+  final bool showBadge;
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = context.watch<DashboardViewModel>();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SectionHeader(title: 'Category Explorer'),
-        const SizedBox(height: 14),
-
-        // 1. Lost Item Card
-        _buildExpandableCard(
-          cardKey: 'lost',
-          title: 'Lost Item',
-          subtitle: 'Explore Lost Categories',
-          emojiIcon: '🥹',
-          gradient: AppColors.reportLostGradient,
-          themeColor: AppColors.lostRedEnd,
-          categoryLabel: '🥹 Select Lost Category:',
-          panelBgColor: const Color(0xFFFFF0F3),
-          reports: viewModel.lostReports,
-          context: context,
-        ),
-        const SizedBox(height: 14),
-
-        // 2. Found Item Card
-        _buildExpandableCard(
-          cardKey: 'found',
-          title: 'Found Item',
-          subtitle: 'Explore Found Categories',
-          emojiIcon: '🎉',
-          gradient: AppColors.reportFoundGradient,
-          themeColor: AppColors.foundGreenEnd,
-          categoryLabel: '🎉 Select Found Category:',
-          panelBgColor: const Color(0xFFF0FDF4),
-          reports: viewModel.foundReports,
-          context: context,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildExpandableCard({
-    required String cardKey,
-    required String title,
-    required String subtitle,
-    required String emojiIcon,
-    required LinearGradient gradient,
-    required Color themeColor,
-    required String categoryLabel,
-    required Color panelBgColor,
-    required List<ReportItem> reports,
-    required BuildContext context,
-  }) {
-    final isExpanded = _expandedCard == cardKey;
-
-    final filteredItems = _selectedCategoryEmoji == 'ALL'
-        ? reports
-        : reports.where((item) => item.emojiIcon == _selectedCategoryEmoji).toList();
-
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _expandedCard = isExpanded ? null : cardKey;
-          _selectedCategoryEmoji = 'ALL';
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        width: double.infinity,
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        width: 42,
+        height: 42,
         decoration: BoxDecoration(
           gradient: gradient,
-          borderRadius: BorderRadius.circular(22),
-          boxShadow: [
-            BoxShadow(
-              color: gradient.colors.last.withAlpha(80),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(22),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Card Header Row
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withAlpha(50),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(emojiIcon, style: const TextStyle(fontSize: 22)),
-                    ),
-                    const SizedBox(width: 14),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          subtitle,
-                          style: TextStyle(
-                            color: Colors.white.withAlpha(200),
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    AnimatedRotation(
-                      turns: isExpanded ? 0.5 : 0,
-                      duration: const Duration(milliseconds: 300),
-                      child: Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: Colors.white.withAlpha(220),
-                        size: 26,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Expanded Category & Summary Panel INSIDE the Card
-              if (isExpanded)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
-                  decoration: BoxDecoration(
-                    color: panelBgColor,
-                    borderRadius: const BorderRadius.vertical(
-                      bottom: Radius.circular(22),
-                    ),
+          color: gradient == null ? Colors.white.withAlpha(20) : null,
+          shape: BoxShape.circle,
+          border: gradient == null
+              ? Border.all(color: Colors.white.withAlpha(30), width: 1)
+              : null,
+          boxShadow: gradient != null
+              ? [
+                  BoxShadow(
+                    color: gradient!.colors.first.withAlpha(80),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Label & Count Badge
-                      Row(
+                ]
+              : null,
+        ),
+        child: ClipOval(
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              splashColor: Colors.white.withAlpha(60),
+              highlightColor: Colors.white.withAlpha(30),
+              child: Center(
+                child: showBadge
+                    ? Stack(
+                        clipBehavior: Clip.none,
                         children: [
-                          Text(
-                            categoryLabel,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              color: themeColor,
-                            ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: themeColor.withAlpha(20),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              '${filteredItems.length} Items',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: themeColor,
+                          Icon(icon, color: Colors.white, size: 22),
+                          Positioned(
+                            right: -1,
+                            top: -1,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFF5C5C),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: const Color(0xFF0C2C69), width: 1.5),
                               ),
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Horizontal Category Chips inside the Card
-                      SizedBox(
-                        height: 68,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _categories.length,
-                          itemBuilder: (context, index) {
-                            final cat = _categories[index];
-                            final emoji = cat['emoji']!;
-                            final label = cat['label']!;
-                            final isSelected = _selectedCategoryEmoji == emoji;
-
-                            return GestureDetector(
-                              onTap: () => setState(() => _selectedCategoryEmoji = emoji),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                margin: const EdgeInsets.only(right: 10),
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: isSelected ? themeColor : Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: isSelected ? themeColor : AppColors.borderColor,
-                                    width: isSelected ? 2 : 1,
-                                  ),
-                                  boxShadow: isSelected
-                                      ? [
-                                          BoxShadow(
-                                            color: themeColor.withAlpha(40),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 3),
-                                          ),
-                                        ]
-                                      : [],
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      emoji == 'ALL' ? '🌐' : emoji,
-                                      style: const TextStyle(fontSize: 18),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      label,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
-                                        color: isSelected ? Colors.white : AppColors.textPrimary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-
-                      // Filtered Items Summary List INSIDE the Card
-                      const SizedBox(height: 14),
-                      if (filteredItems.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          child: Center(
-                            child: Column(
-                              children: [
-                                Text(
-                                  _selectedCategoryEmoji == 'ALL' ? '🔍' : _selectedCategoryEmoji,
-                                  style: const TextStyle(fontSize: 32),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'No items in this category.',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: themeColor.withAlpha(180),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      else
-                        ...filteredItems.map(
-                          (item) => ReportItemCard(
-                            item: item,
-                            onTap: () => ItemDetailModal.show(context, item),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-            ],
+                      )
+                    : child ?? Icon(icon, color: Colors.white, size: 22),
+              ),
+            ),
           ),
         ),
       ),
     );
   }
 }
-
-
