@@ -51,24 +51,26 @@ class ProfileScreen extends StatelessWidget {
             ),
             const Text(
               'ahmed.khalid@example.com',
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 28),
 
-            // Profile List Tiles
             _buildProfileOption(Icons.history, 'My Reports', () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Opening My Reports...')),
               );
             }),
-            _buildProfileOption(Icons.notifications_outlined, 'Notification Settings', () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Opening Notification Settings...')),
-              );
-            }),
+            _buildProfileOption(
+              Icons.notifications_outlined,
+              'Notification Settings',
+              () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Opening Notification Settings...'),
+                  ),
+                );
+              },
+            ),
             _buildProfileOption(Icons.security, 'Privacy & Security', () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Opening Privacy & Security...')),
@@ -80,21 +82,21 @@ class ProfileScreen extends StatelessWidget {
               );
             }),
             const SizedBox(height: 16),
-            _buildProfileOption(
-              Icons.logout,
-              'Log Out',
-              () {
-                Navigator.of(context).pushReplacementNamed('/auth');
-              },
-              textColor: Colors.red,
-            ),
+            _buildProfileOption(Icons.logout, 'Log Out', () {
+              Navigator.of(context).pushReplacementNamed('/auth');
+            }, textColor: Colors.red),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildProfileOption(IconData icon, String title, VoidCallback onTap, {Color? textColor}) {
+  Widget _buildProfileOption(
+    IconData icon,
+    String title,
+    VoidCallback onTap, {
+    Color? textColor,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
@@ -112,7 +114,11 @@ class ProfileScreen extends StatelessWidget {
             color: textColor ?? AppColors.textPrimary,
           ),
         ),
-        trailing: const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+        trailing: const Icon(
+          Icons.chevron_right,
+          size: 18,
+          color: AppColors.textMuted,
+        ),
         onTap: onTap,
       ),
     );

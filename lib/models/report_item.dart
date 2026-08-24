@@ -4,10 +4,10 @@ class ReportItem {
   final String id;
   final String title;
   final String location;
-  final ReportType type; // lost or found
+  final ReportType type;
   final String timeAgo;
   final String? reward;
-  final String? status; // e.g. "MATCHED"
+  final String? status;
   final String emojiIcon;
   final String iconBgHex;
 

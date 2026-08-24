@@ -19,18 +19,14 @@ class AppColors {
   static const Color textMuted = Color(0xFF94A3B8);
 
   // Status Badges & Quick Action Colors
-  static const Color lostRedStart = Color(0xFFFF5252);
-  static const Color lostRedEnd = Color(0xFFE11D48);
-
+  static const Color lostRedStart = Color.fromARGB(255, 195, 154, 154);
+  static const Color lostRedEnd = Color.fromARGB(255, 106, 145, 169);
   static const Color foundGreenStart = Color(0xFF10B981);
   static const Color foundGreenEnd = Color(0xFF059669);
-
   static const Color lostBadgeBg = Color(0xFFFFECEF);
-  static const Color lostBadgeText = Color(0xFFF43F5E);
-
+  static const Color lostBadgeText = Color.fromARGB(255, 75, 70, 71);
   static const Color foundBadgeBg = Color(0xFFE6F9F3);
   static const Color foundBadgeText = Color(0xFF10B981);
-
   static const Color matchedBadgeBg = Color(0xFFE6F8F6);
   static const Color matchedBadgeText = Color(0xFF0D9488);
 
@@ -44,19 +40,26 @@ class AppColors {
   static const LinearGradient dashboardHeaderGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF08183A), Color(0xFF0C2C69), Color(0xFF1246A3)],
+    colors: [
+      Color.fromARGB(255, 19, 34, 66),
+      Color(0xFF0C2C69),
+      Color(0xFF1246A3),
+    ],
   );
 
   static const LinearGradient primaryButtonGradient = LinearGradient(
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
-    colors: [Color(0xFF1D4ED8), Color(0xFF00D2B5)],
+    colors: [Color.fromARGB(255, 149, 172, 234), Color(0xFF00D2B5)],
   );
 
   static const LinearGradient reportLostGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFFF5252), Color(0xFFE11D48)],
+    colors: [
+      Color.fromARGB(255, 243, 168, 168),
+      Color.fromARGB(255, 227, 184, 194),
+    ],
   );
 
   static const LinearGradient reportFoundGradient = LinearGradient(

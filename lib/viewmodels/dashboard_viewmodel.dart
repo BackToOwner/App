@@ -3,8 +3,6 @@ import '../models/report_item.dart';
 import '../services/filter/report_filter_strategy.dart';
 import '../services/repository/report_repository_interface.dart';
 
-/// ViewModel managing dashboard presentation state, injecting IReportRepository (DIP)
-/// and delegating filter logic to ReportFilterStrategy (OCP).
 class DashboardViewModel extends ChangeNotifier {
   final IReportRepository _repository;
   ReportFilterStrategy _filterStrategy = AllReportsFilterStrategy();

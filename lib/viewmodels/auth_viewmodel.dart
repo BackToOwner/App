@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth/auth_service_interface.dart';
 
-/// ViewModel managing Auth UI State and delegating auth operations to IAuthService (SRP, DIP)
 class AuthViewModel extends ChangeNotifier {
   final IAuthService _authService;
 

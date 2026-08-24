@@ -1,6 +1,5 @@
 import '../../models/report_item.dart';
 
-/// Strategy interface for filtering reports (OCP)
 abstract class ReportFilterStrategy {
   ReportType get type;
   List<ReportItem> filter(List<ReportItem> items, String searchQuery);
@@ -19,9 +18,7 @@ class AllReportsFilterStrategy extends ReportFilterStrategy {
 
   @override
   List<ReportItem> filter(List<ReportItem> items, String searchQuery) {
-    return items
-        .where((item) => matchesSearch(item, searchQuery))
-        .toList();
+    return items.where((item) => matchesSearch(item, searchQuery)).toList();
   }
 }
 
@@ -32,7 +29,10 @@ class LostReportsFilterStrategy extends ReportFilterStrategy {
   @override
   List<ReportItem> filter(List<ReportItem> items, String searchQuery) {
     return items
-        .where((item) => item.type == ReportType.lost && matchesSearch(item, searchQuery))
+        .where(
+          (item) =>
+              item.type == ReportType.lost && matchesSearch(item, searchQuery),
+        )
         .toList();
   }
 }
@@ -44,7 +44,10 @@ class FoundReportsFilterStrategy extends ReportFilterStrategy {
   @override
   List<ReportItem> filter(List<ReportItem> items, String searchQuery) {
     return items
-        .where((item) => item.type == ReportType.found && matchesSearch(item, searchQuery))
+        .where(
+          (item) =>
+              item.type == ReportType.found && matchesSearch(item, searchQuery),
+        )
         .toList();
   }
 }

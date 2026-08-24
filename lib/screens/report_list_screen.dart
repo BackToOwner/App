@@ -8,14 +8,10 @@ import '../widgets/item_detail_modal.dart';
 import '../widgets/report_item_card.dart';
 import '../widgets/report_item_modal.dart';
 
-/// Reusable report list screen replacing duplicated LostScreen and FoundScreen boilerplate (DRY)
 class ReportListScreen extends StatelessWidget {
   final ReportType reportType;
 
-  const ReportListScreen({
-    super.key,
-    required this.reportType,
-  });
+  const ReportListScreen({super.key, required this.reportType});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +19,9 @@ class ReportListScreen extends StatelessWidget {
     final isLost = reportType == ReportType.lost;
     final items = isLost ? viewModel.lostReports : viewModel.foundReports;
 
-    final primaryColor = isLost ? AppColors.lostRedEnd : AppColors.foundGreenEnd;
+    final primaryColor = isLost
+        ? AppColors.lostRedEnd
+        : AppColors.foundGreenEnd;
     final title = isLost ? 'Lost Items 🥹' : 'Found Items 🎉';
     final fabLabel = isLost ? 'Report Lost' : 'Report Found';
 
@@ -32,7 +30,10 @@ class ReportListScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           title,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+          ),
         ),
         backgroundColor: AppColors.darkNavy,
         elevation: 0,
@@ -41,14 +42,19 @@ class ReportListScreen extends StatelessWidget {
       body: items.isEmpty
           ? EmptyStateWidget(
               emoji: isLost ? '🥹' : '🎉',
-              title: isLost ? 'No Lost Items Reported Yet' : 'No Found Items Reported Yet',
+              title: isLost
+                  ? 'No Lost Items Reported Yet'
+                  : 'No Found Items Reported Yet',
               subtitle: isLost
                   ? 'Be the first to upload a report for a missing item in your area.'
                   : 'Found something? Upload a report to help return it to its owner.',
               buttonLabel: isLost ? 'Report Lost Item' : 'Report Found Item',
-              badgeBgColor: isLost ? AppColors.lostBadgeBg : AppColors.foundBadgeBg,
+              badgeBgColor: isLost
+                  ? AppColors.lostBadgeBg
+                  : AppColors.foundBadgeBg,
               buttonBgColor: primaryColor,
-              onButtonPressed: () => ReportItemModal.show(context, initialType: reportType),
+              onButtonPressed: () =>
+                  ReportItemModal.show(context, initialType: reportType),
             )
           : ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
@@ -63,12 +69,16 @@ class ReportListScreen extends StatelessWidget {
             ),
       floatingActionButton: items.isNotEmpty
           ? FloatingActionButton.extended(
-              onPressed: () => ReportItemModal.show(context, initialType: reportType),
+              onPressed: () =>
+                  ReportItemModal.show(context, initialType: reportType),
               backgroundColor: primaryColor,
               icon: const Icon(Icons.add, color: Colors.white),
               label: Text(
                 fabLabel,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             )
           : null,
