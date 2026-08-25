@@ -28,6 +28,12 @@ class ReportListScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            context.read<DashboardViewModel>().setNavIndex(0);
+          },
+        ),
         title: Text(
           title,
           style: const TextStyle(

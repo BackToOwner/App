@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/report_item.dart';
@@ -33,6 +35,9 @@ class _ReportItemModalState extends State<ReportItemModal> {
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _rewardController = TextEditingController();
   final TextEditingController _imageController = TextEditingController();
+
+  final ImagePicker _picker = ImagePicker();
+  File? _pickedImage;
   String? _imageFileName;
 
   final List<String> _emojis = ['👛', '📱', '🐕', '🔑', '🎒', '🎧', '💻', '🕶️', '⌚', '💼'];
@@ -54,17 +59,138 @@ class _ReportItemModalState extends State<ReportItemModal> {
     super.dispose();
   }
 
-  void _requestCameraAccess() {
-    setState(() {
-      _imageFileName = 'captured_photo_${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}.jpg';
-      _imageController.text = _imageFileName!;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Camera access granted. Image attached: $_imageFileName'),
-        backgroundColor: AppColors.primaryBlue,
+  /// Shows a bottom sheet to pick from Camera or Gallery.
+  void _showImagePickerOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 44,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.borderColor,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Upload Image',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildPickerOption(
+                    icon: Icons.camera_alt,
+                    label: 'Camera',
+                    color: AppColors.primaryBlue,
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _pickImage(ImageSource.camera);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildPickerOption(
+                    icon: Icons.photo_library,
+                    label: 'Gallery',
+                    color: AppColors.primaryCyan,
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _pickImage(ImageSource.gallery);
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
       ),
     );
+  }
+
+  Widget _buildPickerOption({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          color: color.withAlpha(18),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withAlpha(50), width: 1.2),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+      if (pickedFile != null) {
+        setState(() {
+          _pickedImage = File(pickedFile.path);
+          _imageFileName = pickedFile.name;
+          _imageController.text = _imageFileName!;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Image attached: $_imageFileName'),
+              backgroundColor: AppColors.primaryBlue,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to pick image: $e'),
+            backgroundColor: AppColors.lostRedEnd,
+          ),
+        );
+      }
+    }
   }
 
   void _submitReport() {
@@ -175,19 +301,85 @@ class _ReportItemModalState extends State<ReportItemModal> {
             ),
             const SizedBox(height: 14),
 
-            // Form Field: Upload Image (Requests Camera Access)
-            CustomTextField(
-              label: 'Upload Image',
-              hintText: _imageFileName ?? 'Take photo or upload image',
-              prefixIcon: Icons.camera_alt_outlined,
-              controller: _imageController,
-              suffixWidget: IconButton(
-                onPressed: _requestCameraAccess,
-                icon: const Icon(
-                  Icons.add_a_photo_outlined,
-                  color: AppColors.primaryBlue,
-                  size: 20,
+            // Form Field: Upload Image (Camera / Gallery picker)
+            const Text(
+              'Upload Image',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: _showImagePickerOptions,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.fieldBackground,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.borderColor, width: 1.2),
                 ),
+                child: _pickedImage != null
+                    ? Column(
+                        children: [
+                          ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(15)),
+                            child: Image.file(
+                              _pickedImage!,
+                              width: double.infinity,
+                              height: 160,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 10),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.camera_alt_outlined,
+                                    color: AppColors.primaryBlue, size: 20),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    _imageFileName ?? 'Image attached',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.primaryBlue,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const Icon(Icons.edit,
+                                    color: AppColors.textMuted, size: 18),
+                              ],
+                            ),
+                          ),
+                        ],
+                      )
+                    : Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 16),
+                        child: Row(
+                          children: [
+                            Icon(Icons.camera_alt_outlined,
+                                color: AppColors.textMuted, size: 20),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Text(
+                                'Take photo or upload image',
+                                style: TextStyle(
+                                  color: AppColors.textMuted,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                            Icon(Icons.add_a_photo_outlined,
+                                color: AppColors.primaryBlue, size: 20),
+                          ],
+                        ),
+                      ),
               ),
             ),
             const SizedBox(height: 14),
