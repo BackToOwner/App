@@ -13,7 +13,8 @@ class MyReportsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<DashboardViewModel>();
-    final allReports = viewModel.allReports;
+    // The caller's own reports, from /me/reports — not the whole public feed.
+    final allReports = viewModel.myReports;
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,

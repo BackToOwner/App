@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/report_item.dart';
+import '../services/api/api_exception.dart';
 import '../viewmodels/dashboard_viewmodel.dart';
 import 'custom_text_field.dart';
 import 'gradient_button.dart';
@@ -193,45 +194,59 @@ class _ReportItemModalState extends State<ReportItemModal> {
     }
   }
 
-  void _submitReport() {
+  bool _isSubmitting = false;
+
+  Future<void> _submitReport() async {
+    if (_isSubmitting) return;
+
     final title = _titleController.text.trim();
     final location = _locationController.text.trim();
     final rewardText = _rewardController.text.trim();
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
 
-    if (title.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter an item title.')),
+    if (title.length < 3) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Please enter an item title (at least 3 characters).')),
       );
       return;
     }
 
-    if (location.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+    if (location.length < 2) {
+      messenger.showSnackBar(
         const SnackBar(content: Text('Please enter the location.')),
       );
       return;
     }
 
-    final newItem = ReportItem(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: title,
-      location: location,
-      type: _selectedType,
-      timeAgo: 'Just now',
-      reward: rewardText.isNotEmpty ? (rewardText.contains('reward') ? rewardText : '$rewardText reward') : null,
-      emojiIcon: _selectedEmoji,
-      iconBgHex: _selectedType == ReportType.lost ? 'FFF0F5' : 'E6F9F3',
-    );
+    // The field is free text ("$50", "5000 reward"); keep only the number the API expects.
+    final rewardDigits = rewardText.replaceAll(RegExp(r'[^0-9.]'), '');
+    final reward = rewardDigits.isEmpty ? null : double.tryParse(rewardDigits);
 
-    context.read<DashboardViewModel>().addReport(newItem);
-    Navigator.of(context).pop();
+    setState(() => _isSubmitting = true);
+    try {
+      await context.read<DashboardViewModel>().addReport(
+            title: title,
+            type: _selectedType,
+            location: location,
+            reward: reward,
+            imagePath: _pickedImage?.path,
+          );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Successfully reported: "$title"'),
-        backgroundColor: AppColors.foundGreenStart,
-      ),
-    );
+      navigator.pop();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Successfully reported: "$title"'),
+          backgroundColor: AppColors.foundGreenStart,
+        ),
+      );
+    } on ApiException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: AppColors.lostRedEnd),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -442,7 +457,8 @@ class _ReportItemModalState extends State<ReportItemModal> {
             GradientButton(
               text: isLost ? 'Upload Lost Report' : 'Upload Found Report',
               gradient: isLost ? AppColors.reportLostGradient : AppColors.reportFoundGradient,
-              onPressed: _submitReport,
+              // Disabled mid-flight so a double tap cannot file the report twice.
+              onPressed: _isSubmitting ? null : _submitReport,
             ),
           ],
         ),

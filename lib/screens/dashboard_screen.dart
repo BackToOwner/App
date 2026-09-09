@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/report_item.dart';
 import '../viewmodels/dashboard_viewmodel.dart';
+import '../viewmodels/profile_viewmodel.dart';
+import '../viewmodels/stats_viewmodel.dart';
 import '../widgets/custom_bottom_nav.dart';
 
 import '../widgets/report_item_modal.dart';
@@ -39,13 +41,34 @@ class DashboardScreen extends StatelessWidget {
   }
 }
 
-class _DashboardHomeView extends StatelessWidget {
+class _DashboardHomeView extends StatefulWidget {
   const _DashboardHomeView();
 
   @override
+  State<_DashboardHomeView> createState() => _DashboardHomeViewState();
+}
+
+class _DashboardHomeViewState extends State<_DashboardHomeView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  }
+
+  Future<void> _load() async {
+    // Both are independent; a failing stats call must not stop the feed loading.
+    await Future.wait([
+      context.read<DashboardViewModel>().refresh(),
+      context.read<StatsViewModel>().load(),
+    ]);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -70,6 +93,7 @@ class _DashboardHomeView extends StatelessWidget {
           // 4. Platform Statistics Footer Section
           _buildBottomStatsSection(context),
         ],
+      ),
       ),
     );
   }
@@ -179,9 +203,9 @@ class _DashboardHomeView extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 3),
-              const Text(
-                'Ahmed Khalid',
-                style: TextStyle(
+              Text(
+                context.watch<ProfileViewModel>().user?.name ?? '',
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 25,
                   fontWeight: FontWeight.w800,
@@ -458,6 +482,7 @@ class _DashboardHomeView extends StatelessWidget {
 
   // ─── BOTTOM STATS ───────────────────────────────────────────────────────────
   Widget _buildBottomStatsSection(BuildContext context) {
+    final stats = context.watch<StatsViewModel>();
     return Container(
       decoration: const BoxDecoration(
         gradient: AppColors.dashboardHeaderGradient,
@@ -485,21 +510,21 @@ class _DashboardHomeView extends StatelessWidget {
                   _buildStatCard(
                     icon: Icons.check_circle_rounded,
                     iconColor: const Color(0xFF22C55E),
-                    value: '12,483',
+                    value: stats.itemsReturned,
                     label: 'Items Returned',
                   ),
                   const SizedBox(width: 8),
                   _buildStatCard(
                     icon: Icons.manage_search_rounded,
                     iconColor: const Color(0xFF60A5FA),
-                    value: '3,291',
+                    value: stats.activeCases,
                     label: 'Active Cases',
                   ),
                   const SizedBox(width: 8),
                   _buildStatCard(
                     icon: Icons.track_changes_rounded,
                     iconColor: const Color(0xFFFF7675),
-                    value: '78%',
+                    value: stats.successRate,
                     label: 'Success Rate',
                   ),
                 ],

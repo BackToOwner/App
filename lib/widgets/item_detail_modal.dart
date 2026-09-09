@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/report_item.dart';
+import '../services/api/api_exception.dart';
 import '../viewmodels/dashboard_viewmodel.dart';
 import 'gradient_button.dart';
 
@@ -160,15 +161,24 @@ class ItemDetailModal extends StatelessWidget {
           ),
           const SizedBox(height: 10),
 
-          // Delete Option Button
+          // Delete is owner-only on the server; hiding it elsewhere avoids a guaranteed 403.
+          if (item.isMine)
           Center(
             child: TextButton.icon(
-              onPressed: () {
-                context.read<DashboardViewModel>().deleteReport(item.id);
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Removed "${item.title}" from list.')),
-                );
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                final navigator = Navigator.of(context);
+                try {
+                  await context.read<DashboardViewModel>().deleteReport(item.id);
+                  navigator.pop();
+                  messenger.showSnackBar(
+                    SnackBar(content: Text('Deleted "${item.title}".')),
+                  );
+                } on ApiException catch (e) {
+                  messenger.showSnackBar(
+                    SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+                  );
+                }
               },
               icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
               label: const Text('Delete Report', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),

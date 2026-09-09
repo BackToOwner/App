@@ -25,17 +25,39 @@ class DashboardViewModel extends ChangeNotifier {
   List<ReportItem> get allReports => _repository.getAllReports();
   List<ReportItem> get lostReports => _repository.getLostReports();
   List<ReportItem> get foundReports => _repository.getFoundReports();
+  List<ReportItem> get myReports => _repository.getMyReports();
+
+  bool get isLoading => _repository.isLoading;
+  String? get errorMessage => _repository.errorMessage;
 
   List<ReportItem> get filteredReports =>
       _filterStrategy.filter(_repository.getAllReports(), _searchQuery);
 
-  void addReport(ReportItem newItem) {
-    _repository.addReport(newItem);
+  Future<void> refresh() => _repository.refresh();
+
+  /// Creates a report on the server. Throws [ApiException] so the caller can show the reason
+  /// rather than silently closing the sheet on failure.
+  Future<ReportItem> addReport({
+    required String title,
+    required ReportType type,
+    required String location,
+    String? description,
+    String? category,
+    double? reward,
+    String? imagePath,
+  }) {
+    return _repository.addReport(
+      title: title,
+      type: type,
+      location: location,
+      description: description,
+      category: category,
+      reward: reward,
+      imagePath: imagePath,
+    );
   }
 
-  void deleteReport(String id) {
-    _repository.deleteReport(id);
-  }
+  Future<void> deleteReport(String id) => _repository.deleteReport(id);
 
   void setFilter(ReportType filter) {
     if (_filterStrategy.type != filter) {

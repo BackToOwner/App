@@ -1,13 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
+import '../viewmodels/support_viewmodel.dart';
 
-/// Help & Support screen with contact info, FAQs, and useful links
-/// tailored for a lost-and-found platform.
-class HelpSupportScreen extends StatelessWidget {
+/// Help & Support screen.
+///
+/// Contact details, social links and FAQ copy come from the backend (`/config` and `/faqs`), so
+/// support can change a phone number without shipping a new build.
+class HelpSupportScreen extends StatefulWidget {
   const HelpSupportScreen({super.key});
 
   @override
+  State<HelpSupportScreen> createState() => _HelpSupportScreenState();
+}
+
+class _HelpSupportScreenState extends State<HelpSupportScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<SupportViewModel>().load();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final support = context.watch<SupportViewModel>();
+
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       appBar: AppBar(
@@ -34,15 +53,15 @@ class HelpSupportScreen extends StatelessWidget {
             _buildContactCard(
               icon: Icons.phone_outlined,
               title: 'Hotline',
-              subtitle: '+94 11 234 5678',
-              trailing: 'Available 24/7',
+              subtitle: support.config('hotline', fallback: '—'),
+              trailing: support.config('hotlineHours', fallback: ''),
               trailingColor: AppColors.foundGreenEnd,
             ),
             _buildContactCard(
               icon: Icons.email_outlined,
               title: 'Email Support',
-              subtitle: 'support@backtoowner.com',
-              trailing: 'Reply within 24h',
+              subtitle: support.config('supportEmail', fallback: '—'),
+              trailing: support.config('supportReplyTime', fallback: ''),
               trailingColor: AppColors.primaryBlue,
             ),
             _buildContactCard(
@@ -136,36 +155,23 @@ class HelpSupportScreen extends StatelessWidget {
             // ── FAQs ──
             _buildSectionHeader(Icons.quiz_outlined, 'Frequently Asked Questions'),
             const SizedBox(height: 12),
-            _buildFaqTile(
-              question: 'How do I report a lost item?',
-              answer:
-                  'Go to the Home tab, tap "Report Lost", fill in the item details including title, location, and an optional photo, then submit.',
-            ),
-            _buildFaqTile(
-              question: 'How do I report a found item?',
-              answer:
-                  'Go to the Home tab, tap "Report Found", describe the item you found with its location and a photo to help the owner identify it.',
-            ),
-            _buildFaqTile(
-              question: 'Is there a reward for returning items?',
-              answer:
-                  'Some owners may offer a reward when reporting lost items. This is optional and shown on the report card.',
-            ),
-            _buildFaqTile(
-              question: 'How do I update my profile?',
-              answer:
-                  'Go to Profile → Edit Profile. You can update your name, email, mobile number, and profile photo.',
-            ),
-            _buildFaqTile(
-              question: 'How do I change my password?',
-              answer:
-                  'Go to Profile → Privacy & Security. Enter your current password and set a new one.',
-            ),
-            _buildFaqTile(
-              question: 'Can I delete a report?',
-              answer:
-                  'Yes, you can delete your reports from the Lost or Found items list.',
-            ),
+            if (support.isLoading && support.faqs.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (support.faqs.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  'Help topics could not be loaded. Pull down on the dashboard to retry.',
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                ),
+              )
+            else
+              ...support.faqs.map(
+                (faq) => _buildFaqTile(question: faq.question, answer: faq.answer),
+              ),
             const SizedBox(height: 24),
 
             // ── Follow Us ──

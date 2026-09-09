@@ -1,7 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
+import '../services/api/api_exception.dart';
+import '../viewmodels/profile_viewmodel.dart';
 
 /// Screen that lets the user edit their profile details.
 /// Avatar photo can be updated via camera or gallery using image_picker.
@@ -13,14 +16,61 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  final _firstNameController = TextEditingController(text: 'Ahmed');
-  final _lastNameController = TextEditingController(text: 'Khalid');
-  final _emailController =
-      TextEditingController(text: 'ahmed.khalid@example.com');
-  final _mobileController = TextEditingController(text: '+94 71 234 5678');
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _mobileController = TextEditingController();
+  bool _isSaving = false;
 
   final ImagePicker _picker = ImagePicker();
   File? _profileImage;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = context.read<ProfileViewModel>().user;
+    if (user != null) {
+      _firstNameController.text = user.firstName;
+      _lastNameController.text = user.lastName;
+      _emailController.text = user.email ?? '';
+      _mobileController.text = user.phone ?? '';
+    }
+  }
+
+  Future<void> _save() async {
+    if (_isSaving) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final profile = context.read<ProfileViewModel>();
+
+    setState(() => _isSaving = true);
+    try {
+      await profile.updateProfile(
+        firstName: _firstNameController.text,
+        lastName: _lastNameController.text,
+        email: _emailController.text,
+        phone: _mobileController.text,
+      );
+
+      // The photo is a separate endpoint, so it only uploads when one was picked.
+      final image = _profileImage;
+      if (image != null) await profile.uploadAvatar(image.path);
+
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Profile saved successfully!'),
+          backgroundColor: AppColors.foundGreenEnd,
+        ),
+      );
+      navigator.pop();
+    } on ApiException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: AppColors.lostRedEnd),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -145,8 +195,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Profile photo updated!'),
-              backgroundColor: AppColors.foundGreenEnd,
+              content: Text('Photo selected — tap SAVE to upload it.'),
+              backgroundColor: AppColors.primaryBlue,
             ),
           );
         }
@@ -211,10 +261,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             : null,
                       ),
                       child: _profileImage == null
-                          ? const Center(
+                          ? Center(
                               child: Text(
-                                'A',
-                                style: TextStyle(
+                                context.watch<ProfileViewModel>().user?.initial ?? '?',
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 42,
                                   fontWeight: FontWeight.w800,
@@ -282,15 +332,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Profile saved successfully!'),
-                      backgroundColor: AppColors.foundGreenEnd,
-                    ),
-                  );
-                  Navigator.of(context).pop();
-                },
+                onPressed: _isSaving ? null : _save,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.darkNavy,
                   foregroundColor: Colors.white,
@@ -300,8 +342,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   elevation: 4,
                   shadowColor: AppColors.darkNavy.withAlpha(80),
                 ),
-                child: const Text(
-                  'SAVE',
+                child: Text(
+                  _isSaving ? 'SAVING…' : 'SAVE',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,

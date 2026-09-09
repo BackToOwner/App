@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
+import '../services/api/api_exception.dart';
+import '../viewmodels/profile_viewmodel.dart';
 
 /// Privacy & Security screen with password change fields.
 class PrivacySecurityScreen extends StatefulWidget {
@@ -26,7 +29,10 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
     super.dispose();
   }
 
-  void _changePassword() {
+  bool _isSaving = false;
+
+  Future<void> _changePassword() async {
+    if (_isSaving) return;
     final current = _currentPasswordController.text.trim();
     final newPass = _newPasswordController.text.trim();
     final confirm = _confirmPasswordController.text.trim();
@@ -36,9 +42,9 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
       return;
     }
 
-    if (newPass.length < 6) {
+    if (newPass.length < 8) {
       _showSnackBar(
-          'New password must be at least 6 characters.', AppColors.lostRedEnd);
+          'New password must be at least 8 characters.', AppColors.lostRedEnd);
       return;
     }
 
@@ -48,10 +54,23 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
     }
 
     // Simulate password change
-    _showSnackBar('Password changed successfully!', AppColors.foundGreenEnd);
-    _currentPasswordController.clear();
-    _newPasswordController.clear();
-    _confirmPasswordController.clear();
+    setState(() => _isSaving = true);
+    try {
+      await context.read<ProfileViewModel>().changePassword(
+            currentPassword: current,
+            newPassword: newPass,
+          );
+      if (!mounted) return;
+      _showSnackBar('Password changed successfully!', AppColors.foundGreenEnd);
+      _currentPasswordController.clear();
+      _newPasswordController.clear();
+      _confirmPasswordController.clear();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showSnackBar(e.message, AppColors.lostRedEnd);
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   void _showSnackBar(String message, Color color) {
@@ -149,7 +168,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
-                onPressed: _changePassword,
+                onPressed: _isSaving ? null : _changePassword,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.darkNavy,
                   foregroundColor: Colors.white,

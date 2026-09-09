@@ -1,23 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
-
-enum _NotificationType { match, comment, info, returned, reminder }
-
-class _AppNotification {
-  final _NotificationType type;
-  final String title;
-  final String message;
-  final String timeAgo;
-  bool isRead;
-
-  _AppNotification({
-    required this.type,
-    required this.title,
-    required this.message,
-    required this.timeAgo,
-    this.isRead = false,
-  });
-}
+import '../models/app_notification.dart';
+import '../viewmodels/notifications_viewmodel.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -27,60 +12,20 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  final List<_AppNotification> _notifications = [
-    _AppNotification(
-      type: _NotificationType.match,
-      title: 'Possible Match Found! 🎉',
-      message: "Someone reported finding an item that matches your lost 'Black Wallet'.",
-      timeAgo: '5m ago',
-    ),
-    _AppNotification(
-      type: _NotificationType.comment,
-      title: 'New Reply on Your Report',
-      message: 'Sara left a comment on your found item report.',
-      timeAgo: '1h ago',
-    ),
-    _AppNotification(
-      type: _NotificationType.returned,
-      title: 'Item Marked as Returned',
-      message: "Great news — your reported item was successfully returned to its owner.",
-      timeAgo: 'Yesterday',
-      isRead: true,
-    ),
-    _AppNotification(
-      type: _NotificationType.info,
-      title: 'Your Report is Trending',
-      message: "Your lost 'iPhone 13' report has been viewed 24 times this week.",
-      timeAgo: '2 days ago',
-      isRead: true,
-    ),
-    _AppNotification(
-      type: _NotificationType.reminder,
-      title: 'Still Missing?',
-      message: "It's been 7 days since you reported a lost item. Let us know if it's been found.",
-      timeAgo: '3 days ago',
-      isRead: true,
-    ),
-  ];
-
-  bool get _hasUnread => _notifications.any((n) => !n.isRead);
-
-  void _markAllRead() {
-    setState(() {
-      for (final n in _notifications) {
-        n.isRead = true;
-      }
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<NotificationsViewModel>().load();
     });
-  }
-
-  void _markRead(_AppNotification n) {
-    if (!n.isRead) {
-      setState(() => n.isRead = true);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<NotificationsViewModel>();
+    final notifications = vm.items;
+    final hasUnread = vm.unreadCount > 0;
+
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       appBar: AppBar(
@@ -93,11 +38,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         centerTitle: true,
         actions: [
           TextButton(
-            onPressed: _hasUnread ? _markAllRead : null,
+            onPressed: hasUnread ? () => context.read<NotificationsViewModel>().markAllRead() : null,
             child: Text(
               'Mark all read',
               style: TextStyle(
-                color: _hasUnread ? AppColors.primaryCyan : Colors.white.withAlpha(70),
+                color: hasUnread ? AppColors.primaryCyan : Colors.white.withAlpha(70),
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
               ),
@@ -105,14 +50,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ],
       ),
-      body: _notifications.isEmpty
-          ? _buildEmptyState()
-          : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-              itemCount: _notifications.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (context, index) => _buildTile(_notifications[index]),
-            ),
+      body: vm.isLoading && notifications.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : notifications.isEmpty
+              ? RefreshIndicator(
+                  onRefresh: vm.load,
+                  child: ListView(children: [SizedBox(height: 120), _buildEmptyState()]),
+                )
+              : RefreshIndicator(
+                  onRefresh: vm.load,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                    itemCount: notifications.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    itemBuilder: (context, index) => _buildTile(notifications[index]),
+                  ),
+                ),
     );
   }
 
@@ -152,11 +105,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  Widget _buildTile(_AppNotification n) {
+  Widget _buildTile(AppNotification n) {
     final visual = _visualFor(n.type);
 
     return GestureDetector(
-      onTap: () => _markRead(n),
+      onTap: () => context.read<NotificationsViewModel>().markRead(n),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -219,7 +172,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    n.message,
+                    n.body,
                     style: const TextStyle(
                       fontSize: 12.5,
                       color: AppColors.textSecondary,
@@ -244,17 +197,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  ({IconData icon, Color color}) _visualFor(_NotificationType type) {
+  ({IconData icon, Color color}) _visualFor(NotificationType type) {
     switch (type) {
-      case _NotificationType.match:
+      case NotificationType.match:
         return (icon: Icons.favorite_rounded, color: AppColors.foundGreenEnd);
-      case _NotificationType.comment:
+      case NotificationType.comment:
         return (icon: Icons.chat_bubble_rounded, color: AppColors.primaryBlue);
-      case _NotificationType.returned:
+      case NotificationType.claim:
+        return (icon: Icons.handshake_rounded, color: AppColors.primaryCyan);
+      case NotificationType.returned:
         return (icon: Icons.task_alt_rounded, color: AppColors.foundGreenEnd);
-      case _NotificationType.info:
+      case NotificationType.info:
         return (icon: Icons.trending_up_rounded, color: AppColors.primaryBlue);
-      case _NotificationType.reminder:
+      case NotificationType.reminder:
         return (icon: Icons.notifications_active_rounded, color: AppColors.lostRedEnd);
     }
   }

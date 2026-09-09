@@ -176,6 +176,36 @@ class _AuthScreenContent extends StatelessWidget {
                           ),
                         ],
                         const SizedBox(height: 18),
+                        if (viewModel.errorMessage != null) ...[
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(bottom: 14),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: AppColors.lostRedEnd.withAlpha(24),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.lostRedEnd.withAlpha(90)),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.error_outline, color: AppColors.lostRedEnd, size: 18),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    viewModel.errorMessage!,
+                                    style: const TextStyle(
+                                      color: AppColors.lostRedEnd,
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                         CustomTextField(
                           label: 'Password',
                           hintText: 'Min 8 characters',
@@ -198,14 +228,10 @@ class _AuthScreenContent extends StatelessWidget {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Password reset link requested.',
-                                  ),
-                                ),
-                              );
+                            onPressed: () async {
+                              final messenger = ScaffoldMessenger.of(context);
+                              final message = await viewModel.requestPasswordReset();
+                              messenger.showSnackBar(SnackBar(content: Text(message)));
                             },
                             child: const Text(
                               'Forgot password?',
