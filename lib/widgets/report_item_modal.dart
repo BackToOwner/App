@@ -32,7 +32,10 @@ class ReportItemModal extends StatefulWidget {
 class _ReportItemModalState extends State<ReportItemModal> {
   late ReportType _selectedType;
   final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _colorController = TextEditingController();
+  final TextEditingController _campusController = TextEditingController();
+  final TextEditingController _areaController = TextEditingController();
+  final TextEditingController _additionalDetailsController = TextEditingController();
   final TextEditingController _rewardController = TextEditingController();
   final TextEditingController _imageController = TextEditingController();
 
@@ -53,7 +56,10 @@ class _ReportItemModalState extends State<ReportItemModal> {
   @override
   void dispose() {
     _titleController.dispose();
-    _locationController.dispose();
+    _colorController.dispose();
+    _campusController.dispose();
+    _areaController.dispose();
+    _additionalDetailsController.dispose();
     _rewardController.dispose();
     _imageController.dispose();
     super.dispose();
@@ -195,7 +201,10 @@ class _ReportItemModalState extends State<ReportItemModal> {
 
   void _submitReport() {
     final title = _titleController.text.trim();
-    final location = _locationController.text.trim();
+    final itemColor = _colorController.text.trim();
+    final campus = _campusController.text.trim();
+    final area = _areaController.text.trim();
+    final additionalDetails = _additionalDetailsController.text.trim();
     final rewardText = _rewardController.text.trim();
 
     if (title.isEmpty) {
@@ -205,9 +214,16 @@ class _ReportItemModalState extends State<ReportItemModal> {
       return;
     }
 
-    if (location.isEmpty) {
+    if (campus.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter the location.')),
+        const SnackBar(content: Text('Please enter the campus.')),
+      );
+      return;
+    }
+
+    if (area.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter the area.')),
       );
       return;
     }
@@ -215,7 +231,10 @@ class _ReportItemModalState extends State<ReportItemModal> {
     final newItem = ReportItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: title,
-      location: location,
+      itemColor: itemColor.isNotEmpty ? itemColor : null,
+      campus: campus,
+      area: area,
+      additionalDetails: additionalDetails.isNotEmpty ? additionalDetails : null,
       type: _selectedType,
       timeAgo: 'Just now',
       reward: rewardText.isNotEmpty ? (rewardText.contains('reward') ? rewardText : '$rewardText reward') : null,
@@ -292,12 +311,54 @@ class _ReportItemModalState extends State<ReportItemModal> {
             ),
             const SizedBox(height: 14),
 
-            // Form Field: Location
+            // Form Field: Item Color (Optional)
             CustomTextField(
-              label: 'Location *',
-              hintText: 'e.g. Central Park, NY or Terminal 2',
-              prefixIcon: Icons.location_on_outlined,
-              controller: _locationController,
+              label: 'Item Color',
+              hintText: 'e.g. Black, Silver, Red',
+              prefixIcon: Icons.palette_outlined,
+              controller: _colorController,
+            ),
+            const SizedBox(height: 14),
+
+            // Form Field: Location — Campus & Area
+            const Text(
+              'Location *',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: CustomTextField(
+                    label: 'Campus',
+                    hintText: 'e.g. BCI',
+                    prefixIcon: Icons.school_outlined,
+                    controller: _campusController,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: CustomTextField(
+                    label: 'Area',
+                    hintText: 'e.g. CRK 2',
+                    prefixIcon: Icons.place_outlined,
+                    controller: _areaController,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // Form Field: Additional Details (Optional)
+            CustomTextField(
+              label: 'Additional Details (Optional)',
+              hintText: 'e.g. Near the computers on the second floor',
+              prefixIcon: Icons.info_outline,
+              controller: _additionalDetailsController,
             ),
             const SizedBox(height: 14),
 

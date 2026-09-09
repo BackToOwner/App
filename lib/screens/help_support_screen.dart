@@ -139,12 +139,12 @@ class HelpSupportScreen extends StatelessWidget {
             _buildFaqTile(
               question: 'How do I report a lost item?',
               answer:
-                  'Go to the Home tab, tap "Report Lost", fill in the item details including title, location, and an optional photo, then submit.',
+                  'Go to the Home tab, tap "Report Lost", fill in the item details including title, campus, area, additional location details, and an optional photo, then submit.',
             ),
             _buildFaqTile(
               question: 'How do I report a found item?',
               answer:
-                  'Go to the Home tab, tap "Report Found", describe the item you found with its location and a photo to help the owner identify it.',
+                  'Go to the Home tab, tap "Report Found", describe the item you found with its campus, area, additional details, and a photo to help the owner identify it.',
             ),
             _buildFaqTile(
               question: 'Is there a reward for returning items?',

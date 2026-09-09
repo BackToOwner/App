@@ -73,7 +73,7 @@ class ItemDetailModal extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.title,
+                      item.displayTitle,
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
@@ -132,7 +132,17 @@ class ItemDetailModal extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Detail Items List
-          _buildDetailRow(Icons.location_on_outlined, 'Location', item.location),
+          if (item.itemColor != null && item.itemColor!.isNotEmpty) ...[
+            _buildDetailRow(Icons.palette_outlined, 'Color', item.itemColor!),
+            const SizedBox(height: 12),
+          ],
+          _buildDetailRow(Icons.school_outlined, 'Campus', item.campus),
+          const SizedBox(height: 12),
+          _buildDetailRow(Icons.place_outlined, 'Area', item.area),
+          if (item.additionalDetails != null && item.additionalDetails!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _buildDetailRow(Icons.info_outline, 'Details', item.additionalDetails!),
+          ],
           const SizedBox(height: 12),
           _buildDetailRow(Icons.access_time, 'Reported', item.timeAgo),
           if (item.reward != null) ...[
@@ -152,7 +162,7 @@ class ItemDetailModal extends StatelessWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    isLost ? 'Messaging reporter of "${item.title}"...' : 'Submitting claim request for "${item.title}"...',
+                    isLost ? 'Messaging reporter of "${item.displayTitle}"...' : 'Submitting claim request for "${item.displayTitle}"...',
                   ),
                 ),
               );
@@ -167,7 +177,7 @@ class ItemDetailModal extends StatelessWidget {
                 context.read<DashboardViewModel>().deleteReport(item.id);
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Removed "${item.title}" from list.')),
+                  SnackBar(content: Text('Removed "${item.displayTitle}" from list.')),
                 );
               },
               icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),

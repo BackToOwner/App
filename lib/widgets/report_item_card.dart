@@ -72,7 +72,7 @@ class ReportItemCard extends StatelessWidget {
                         children: [
                           Flexible(
                             child: Text(
-                              item.title,
+                              item.displayTitle,
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700,
