@@ -3,14 +3,14 @@ import '../models/report_item.dart';
 import '../services/filter/report_filter_strategy.dart';
 import '../services/repository/report_repository_interface.dart';
 
-class DashboardViewModel extends ChangeNotifier {
+class DashboardController extends ChangeNotifier {
   final IReportRepository _repository;
   ReportFilterStrategy _filterStrategy = AllReportsFilterStrategy();
 
   int _currentNavIndex = 0;
   String _searchQuery = '';
 
-  DashboardViewModel(this._repository) {
+  DashboardController(this._repository) {
     _repository.addListener(_onRepositoryChanged);
   }
 

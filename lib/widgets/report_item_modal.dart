@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/report_item.dart';
-import '../viewmodels/dashboard_viewmodel.dart';
+import '../controllers/dashboard_controller.dart';
 import 'custom_text_field.dart';
 import 'gradient_button.dart';
 
@@ -242,7 +242,7 @@ class _ReportItemModalState extends State<ReportItemModal> {
       iconBgHex: _selectedType == ReportType.lost ? 'FFF0F5' : 'E6F9F3',
     );
 
-    context.read<DashboardViewModel>().addReport(newItem);
+    context.read<DashboardController>().addReport(newItem);
     Navigator.of(context).pop();
 
     ScaffoldMessenger.of(context).showSnackBar(

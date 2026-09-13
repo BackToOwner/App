@@ -12,8 +12,8 @@ import 'services/auth/auth_service_interface.dart';
 import 'services/auth/mock_auth_service.dart';
 import 'services/repository/in_memory_report_repository.dart';
 import 'services/repository/report_repository_interface.dart';
-import 'viewmodels/auth_viewmodel.dart';
-import 'viewmodels/dashboard_viewmodel.dart';
+import 'controllers/auth_controller.dart';
+import 'controllers/dashboard_controller.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,14 +31,14 @@ class BackToOwnerApp extends StatelessWidget {
         Provider<IAuthService>(create: (_) => MockAuthService()),
         ListenableProvider<IReportRepository>(create: (_) => InMemoryReportRepository()),
 
-        // 2. ViewModels receiving injected Service & Repository abstractions
-        ChangeNotifierProvider<AuthViewModel>(
-          create: (context) => AuthViewModel(
+        // 2. Controllers receiving injected Service & Repository abstractions
+        ChangeNotifierProvider<AuthController>(
+          create: (context) => AuthController(
             context.read<IAuthService>(),
           ),
         ),
-        ChangeNotifierProvider<DashboardViewModel>(
-          create: (context) => DashboardViewModel(
+        ChangeNotifierProvider<DashboardController>(
+          create: (context) => DashboardController(
             context.read<IReportRepository>(),
           ),
         ),

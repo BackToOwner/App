@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/report_item.dart';
-import '../viewmodels/dashboard_viewmodel.dart';
+import '../controllers/dashboard_controller.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/item_detail_modal.dart';
 import '../widgets/report_item_card.dart';
@@ -15,9 +15,9 @@ class ReportListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = context.watch<DashboardViewModel>();
+    final controller = context.watch<DashboardController>();
     final isLost = reportType == ReportType.lost;
-    final items = isLost ? viewModel.lostReports : viewModel.foundReports;
+    final items = isLost ? controller.lostReports : controller.foundReports;
 
     final primaryColor = isLost
         ? AppColors.lostRedEnd
@@ -31,7 +31,7 @@ class ReportListScreen extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            context.read<DashboardViewModel>().setNavIndex(0);
+            context.read<DashboardController>().setNavIndex(0);
           },
         ),
         title: Text(

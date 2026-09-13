@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../services/auth/auth_service_interface.dart';
 
-class AuthViewModel extends ChangeNotifier {
+class AuthController extends ChangeNotifier {
   final IAuthService _authService;
 
-  AuthViewModel(this._authService);
+  AuthController(this._authService);
 
   bool _isSignIn = true;
   bool _obscurePassword = true;

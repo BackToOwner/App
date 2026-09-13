@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
-import '../viewmodels/dashboard_viewmodel.dart';
+import '../controllers/dashboard_controller.dart';
 import 'edit_profile_screen.dart';
 import 'help_support_screen.dart';
 import 'privacy_security_screen.dart';
@@ -17,7 +17,7 @@ class ProfileScreen extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            context.read<DashboardViewModel>().setNavIndex(0);
+            context.read<DashboardController>().setNavIndex(0);
           },
         ),
         title: const Text(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/report_item.dart';
-import '../viewmodels/dashboard_viewmodel.dart';
+import '../controllers/dashboard_controller.dart';
 import 'gradient_button.dart';
 
 class ItemDetailModal extends StatelessWidget {
@@ -174,7 +174,7 @@ class ItemDetailModal extends StatelessWidget {
           Center(
             child: TextButton.icon(
               onPressed: () {
-                context.read<DashboardViewModel>().deleteReport(item.id);
+                context.read<DashboardController>().deleteReport(item.id);
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Removed "${item.displayTitle}" from list.')),

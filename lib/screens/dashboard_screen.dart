@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/report_item.dart';
-import '../viewmodels/dashboard_viewmodel.dart';
+import '../controllers/dashboard_controller.dart';
 import '../widgets/custom_bottom_nav.dart';
 
 import '../widgets/report_item_modal.dart';
@@ -16,12 +16,12 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<DashboardViewModel>(
-      builder: (context, viewModel, child) {
+    return Consumer<DashboardController>(
+      builder: (context, controller, child) {
         return Scaffold(
           backgroundColor: AppColors.scaffoldBackground,
           body: IndexedStack(
-            index: viewModel.currentNavIndex,
+            index: controller.currentNavIndex,
             children: const [
               _DashboardHomeView(),
               LostScreen(),
@@ -30,8 +30,8 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
           bottomNavigationBar: CustomBottomNav(
-            currentIndex: viewModel.currentNavIndex,
-            onTap: (index) => viewModel.setNavIndex(index),
+            currentIndex: controller.currentNavIndex,
+            onTap: (index) => controller.setNavIndex(index),
           ),
         );
       },
@@ -149,7 +149,7 @@ class _DashboardHomeView extends StatelessWidget {
                   // Avatar — taps through to the Profile tab
                   _HeaderIconButton(
                     tooltip: 'Profile',
-                    onTap: () => context.read<DashboardViewModel>().setNavIndex(3),
+                    onTap: () => context.read<DashboardController>().setNavIndex(3),
                     gradient: const LinearGradient(
                       colors: [Color(0xFF00D2B5), Color(0xFF00A99D)],
                       begin: Alignment.topLeft,
@@ -351,7 +351,7 @@ class _DashboardHomeView extends StatelessWidget {
 
   // ─── BROWSE ITEMS ───────────────────────────────────────────────────────────
   Widget _buildBrowseItemsSection(BuildContext context) {
-    final viewModel = context.watch<DashboardViewModel>();
+    final controller = context.watch<DashboardController>();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -371,17 +371,17 @@ class _DashboardHomeView extends StatelessWidget {
             _buildBrowseTile(
               icon: Icons.inventory_2_outlined,
               title: 'Lost Items',
-              subtitle: '${viewModel.lostReports.length} reported',
+              subtitle: '${controller.lostReports.length} reported',
               themeColor: AppColors.lostRedEnd,
-              onTap: () => viewModel.setNavIndex(1),
+              onTap: () => controller.setNavIndex(1),
             ),
             const SizedBox(width: 14),
             _buildBrowseTile(
               icon: Icons.task_alt_rounded,
               title: 'Found Items',
-              subtitle: '${viewModel.foundReports.length} reported',
+              subtitle: '${controller.foundReports.length} reported',
               themeColor: AppColors.foundGreenEnd,
-              onTap: () => viewModel.setNavIndex(2),
+              onTap: () => controller.setNavIndex(2),
             ),
           ],
         ),

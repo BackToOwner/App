@@ -7,8 +7,8 @@ import 'package:back_to_owner/services/auth/mock_auth_service.dart';
 import 'package:back_to_owner/services/filter/report_filter_strategy.dart';
 import 'package:back_to_owner/services/repository/in_memory_report_repository.dart';
 import 'package:back_to_owner/services/repository/report_repository_interface.dart';
-import 'package:back_to_owner/viewmodels/auth_viewmodel.dart';
-import 'package:back_to_owner/viewmodels/dashboard_viewmodel.dart';
+import 'package:back_to_owner/controllers/auth_controller.dart';
+import 'package:back_to_owner/controllers/dashboard_controller.dart';
 import 'package:back_to_owner/widgets/custom_segmented_control.dart';
 import 'package:back_to_owner/widgets/empty_state_widget.dart';
 import 'package:back_to_owner/widgets/section_header.dart';
@@ -37,7 +37,8 @@ void main() {
       final item1 = ReportItem(
         id: '101',
         title: 'Lost Wallet',
-        location: 'Downtown',
+        campus: 'Main Campus',
+        area: 'Downtown',
         type: ReportType.lost,
         timeAgo: '1h ago',
         emojiIcon: '👛',
@@ -47,7 +48,8 @@ void main() {
       final item2 = ReportItem(
         id: '102',
         title: 'Found Keys',
-        location: 'Uptown',
+        campus: 'North Campus',
+        area: 'Uptown',
         type: ReportType.found,
         timeAgo: '30m ago',
         emojiIcon: '🔑',
@@ -70,7 +72,8 @@ void main() {
       final itemLost = ReportItem(
         id: '1',
         title: 'Black Leather Wallet',
-        location: 'Central Park',
+        campus: 'Main Campus',
+        area: 'Central Park',
         type: ReportType.lost,
         timeAgo: '10m ago',
         emojiIcon: '👛',
@@ -80,14 +83,15 @@ void main() {
       final itemFound = ReportItem(
         id: '2',
         title: 'iPhone 15',
-        location: 'Central Station',
+        campus: 'Main Campus',
+        area: 'Central Station',
         type: ReportType.found,
         timeAgo: '5m ago',
         emojiIcon: '📱',
         iconBgHex: 'F0F7FF',
       );
 
-      final items = [itemLost, itemFound];
+      final items = <ReportItem>[itemLost, itemFound];
 
       final allFilter = AllReportsFilterStrategy();
       final lostFilter = LostReportsFilterStrategy();
@@ -103,45 +107,46 @@ void main() {
       expect(allFilter.filter(items, 'Nonexistent'), isEmpty);
     });
 
-    test('AuthViewModel delegates to injected IAuthService (DIP, SRP)', () async {
+    test('AuthController delegates to injected IAuthService (DIP, SRP)', () async {
       final mockAuth = MockAuthService();
-      final viewModel = AuthViewModel(mockAuth);
+      final controller = AuthController(mockAuth);
 
-      expect(viewModel.isSignIn, isTrue);
-      expect(viewModel.obscurePassword, isTrue);
+      expect(controller.isSignIn, isTrue);
+      expect(controller.obscurePassword, isTrue);
 
-      viewModel.setAuthMode(false);
-      expect(viewModel.isSignIn, isFalse);
+      controller.setAuthMode(false);
+      expect(controller.isSignIn, isFalse);
 
-      viewModel.togglePasswordVisibility();
-      expect(viewModel.obscurePassword, isFalse);
+      controller.togglePasswordVisibility();
+      expect(controller.obscurePassword, isFalse);
     });
 
-    test('DashboardViewModel delegates to injected IReportRepository and Filter Strategy', () {
+    test('DashboardController delegates to injected IReportRepository and Filter Strategy', () {
       final repository = InMemoryReportRepository([]);
-      final viewModel = DashboardViewModel(repository);
+      final controller = DashboardController(repository);
 
-      expect(viewModel.allReports, isEmpty);
+      expect(controller.allReports, isEmpty);
 
       final item = ReportItem(
         id: '1',
         title: 'AirPods',
-        location: 'Library',
+        campus: 'Main Campus',
+        area: 'Library',
         type: ReportType.found,
         timeAgo: '1h ago',
         emojiIcon: '🎧',
         iconBgHex: 'F0F7FF',
       );
 
-      viewModel.addReport(item);
-      expect(viewModel.allReports, hasLength(1));
-      expect(viewModel.filteredReports, hasLength(1));
+      controller.addReport(item);
+      expect(controller.allReports, hasLength(1));
+      expect(controller.filteredReports, hasLength(1));
 
-      viewModel.setFilter(ReportType.lost);
-      expect(viewModel.filteredReports, isEmpty);
+      controller.setFilter(ReportType.lost);
+      expect(controller.filteredReports, isEmpty);
 
-      viewModel.setFilter(ReportType.found);
-      expect(viewModel.filteredReports, hasLength(1));
+      controller.setFilter(ReportType.found);
+      expect(controller.filteredReports, hasLength(1));
     });
   });
 
@@ -221,7 +226,8 @@ void main() {
         ReportItem(
           id: '1',
           title: 'Lost Keys',
-          location: 'Main St',
+          campus: 'Main Campus',
+          area: 'Main St',
           type: ReportType.lost,
           timeAgo: '1h ago',
           emojiIcon: '🔑',
@@ -233,7 +239,7 @@ void main() {
         ListenableProvider<IReportRepository>.value(
           value: repository,
           child: ChangeNotifierProvider(
-            create: (_) => DashboardViewModel(repository),
+            create: (_) => DashboardController(repository),
             child: const MaterialApp(
               home: ReportListScreen(reportType: ReportType.lost),
             ),
