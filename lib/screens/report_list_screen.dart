@@ -20,9 +20,9 @@ class ReportListScreen extends StatelessWidget {
     final items = isLost ? controller.lostReports : controller.foundReports;
 
     final primaryColor = isLost
-        ? AppColors.lostRedEnd
-        : AppColors.foundGreenEnd;
-    final title = isLost ? 'Lost Items 🥹' : 'Found Items 🎉';
+        ? AppColors.lostThemeStart
+        : AppColors.foundThemeStart;
+    final title = isLost ? 'Lost Items' : 'Found Items';
     final fabLabel = isLost ? 'Report Lost' : 'Report Found';
 
     return Scaffold(
@@ -47,7 +47,7 @@ class ReportListScreen extends StatelessWidget {
       ),
       body: items.isEmpty
           ? EmptyStateWidget(
-              emoji: isLost ? '🥹' : '🎉',
+              iconData: isLost ? Icons.search_off_rounded : Icons.task_alt_rounded,
               title: isLost
                   ? 'No Lost Items Reported Yet'
                   : 'No Found Items Reported Yet',
@@ -75,8 +75,8 @@ class ReportListScreen extends StatelessWidget {
             ),
       floatingActionButton: items.isNotEmpty
           ? FloatingActionButton.extended(
-              onPressed: () =>
-                  ReportItemModal.show(context, initialType: reportType),
+              heroTag: isLost ? 'lost_fab' : 'found_fab',
+              onPressed: () => ReportItemModal.show(context, initialType: isLost ? ReportType.lost : ReportType.found),
               backgroundColor: primaryColor,
               icon: const Icon(Icons.add, color: Colors.white),
               label: Text(

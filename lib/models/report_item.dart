@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+
 enum ReportType { all, lost, found }
 
 class ReportItem {
@@ -11,7 +13,7 @@ class ReportItem {
   final String timeAgo;
   final String? reward;
   final String? status;
-  final String emojiIcon;
+  final IconData icon;
   final String iconBgHex;
 
   ReportItem({
@@ -25,7 +27,7 @@ class ReportItem {
     required this.timeAgo,
     this.reward,
     this.status,
-    required this.emojiIcon,
+    required this.icon,
     required this.iconBgHex,
   });
 

@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import '../../models/report_item.dart';
 import 'report_repository_interface.dart';
 
@@ -18,7 +18,7 @@ class InMemoryReportRepository extends ValueNotifier<List<ReportItem>>
       type: ReportType.lost,
       timeAgo: '2h ago',
       reward: r'$50 reward',
-      emojiIcon: '👛',
+      icon: Icons.account_balance_wallet,
       iconBgHex: 'FFF0F5',
     ),
     ReportItem(
@@ -31,7 +31,7 @@ class InMemoryReportRepository extends ValueNotifier<List<ReportItem>>
       type: ReportType.found,
       timeAgo: '4h ago',
       status: 'MATCHED',
-      emojiIcon: '📱',
+      icon: Icons.smartphone,
       iconBgHex: 'F0F7FF',
     ),
     ReportItem(
@@ -43,7 +43,7 @@ class InMemoryReportRepository extends ValueNotifier<List<ReportItem>>
       type: ReportType.lost,
       timeAgo: '1d ago',
       reward: r'$200 reward',
-      emojiIcon: '🐕',
+      icon: Icons.pets,
       iconBgHex: 'FFF9EB',
     ),
     ReportItem(
@@ -55,7 +55,7 @@ class InMemoryReportRepository extends ValueNotifier<List<ReportItem>>
       additionalDetails: 'Found in Room 105',
       type: ReportType.found,
       timeAgo: '3h ago',
-      emojiIcon: '🔑',
+      icon: Icons.vpn_key,
       iconBgHex: 'F0FDF4',
     ),
     ReportItem(
@@ -67,7 +67,7 @@ class InMemoryReportRepository extends ValueNotifier<List<ReportItem>>
       type: ReportType.lost,
       timeAgo: '6h ago',
       reward: r'$30 reward',
-      emojiIcon: '🎒',
+      icon: Icons.backpack,
       iconBgHex: 'EFF6FF',
     ),
     ReportItem(
@@ -79,7 +79,7 @@ class InMemoryReportRepository extends ValueNotifier<List<ReportItem>>
       additionalDetails: 'Left on a table near the window',
       type: ReportType.found,
       timeAgo: '5h ago',
-      emojiIcon: '🎧',
+      icon: Icons.headphones,
       iconBgHex: 'F5F3FF',
     ),
     ReportItem(
@@ -92,7 +92,7 @@ class InMemoryReportRepository extends ValueNotifier<List<ReportItem>>
       type: ReportType.lost,
       timeAgo: '8h ago',
       reward: r'$150 reward',
-      emojiIcon: '💻',
+      icon: Icons.laptop,
       iconBgHex: 'F0F9FF',
     ),
     ReportItem(
@@ -103,7 +103,7 @@ class InMemoryReportRepository extends ValueNotifier<List<ReportItem>>
       area: 'Sports Ground',
       type: ReportType.found,
       timeAgo: '1d ago',
-      emojiIcon: '🕶️',
+      icon: Icons.visibility,
       iconBgHex: 'FFF7ED',
     ),
   ];

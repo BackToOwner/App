@@ -64,7 +64,11 @@ class ItemDetailModal extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Center(
-                  child: Text(item.emojiIcon, style: const TextStyle(fontSize: 32)),
+                  child: Icon(
+                    item.icon,
+                    size: 32,
+                    color: item.type == ReportType.lost ? AppColors.lostThemeStart : AppColors.foundThemeStart,
+                  ),
                 ),
               ),
               const SizedBox(width: 16),

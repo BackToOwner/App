@@ -36,7 +36,7 @@ class HelpSupportScreen extends StatelessWidget {
               title: 'Hotline',
               subtitle: '+94 11 234 5678',
               trailing: 'Available 24/7',
-              trailingColor: AppColors.foundGreenEnd,
+              trailingColor: AppColors.foundThemeEnd,
             ),
             _buildContactCard(
               icon: Icons.email_outlined,
@@ -63,7 +63,7 @@ class HelpSupportScreen extends StatelessWidget {
                 ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                    color: AppColors.lostRedEnd.withAlpha(40), width: 1),
+                    color: AppColors.errorRed.withAlpha(40), width: 1),
               ),
               child: Row(
                 children: [
@@ -71,11 +71,11 @@ class HelpSupportScreen extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: AppColors.lostRedEnd.withAlpha(25),
+                      color: AppColors.errorRed.withAlpha(25),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(Icons.emergency_outlined,
-                        color: AppColors.lostRedEnd, size: 22),
+                        color: AppColors.errorRed, size: 22),
                   ),
                   const SizedBox(width: 14),
                   const Expanded(
@@ -87,7 +87,7 @@ class HelpSupportScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.lostRedEnd,
+                            color: AppColors.errorRed,
                           ),
                         ),
                         SizedBox(height: 2),
@@ -101,7 +101,7 @@ class HelpSupportScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const Icon(Icons.call, color: AppColors.lostRedEnd, size: 20),
+                  const Icon(Icons.call, color: AppColors.errorRed, size: 20),
                 ],
               ),
             ),
@@ -129,7 +129,7 @@ class HelpSupportScreen extends StatelessWidget {
               title: 'Get Connected',
               description:
                   'When a match is found, both parties are notified to arrange a safe return.',
-              color: AppColors.foundGreenEnd,
+              color: AppColors.foundThemeEnd,
             ),
             const SizedBox(height: 24),
 

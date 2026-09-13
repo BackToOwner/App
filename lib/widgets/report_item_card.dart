@@ -54,9 +54,10 @@ class ReportItemCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Center(
-                    child: Text(
-                      item.emojiIcon,
-                      style: const TextStyle(fontSize: 26),
+                    child: Icon(
+                      item.icon,
+                      size: 26,
+                      color: isLost ? AppColors.lostThemeStart : AppColors.foundThemeStart,
                     ),
                   ),
                 ),
@@ -159,7 +160,7 @@ class ReportItemCard extends StatelessWidget {
                             const SizedBox(width: 8),
                             Flexible(
                               child: Text(
-                                '🏆 ${item.reward}',
+                                'Reward: ${item.reward}',
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,

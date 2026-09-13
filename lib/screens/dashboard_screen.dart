@@ -215,7 +215,7 @@ class _DashboardHomeView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFF1246A3).withAlpha(12),
+                color: AppColors.primaryBlue.withAlpha(12),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Text(
@@ -223,7 +223,7 @@ class _DashboardHomeView extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1246A3),
+                  color: AppColors.primaryBlue,
                 ),
               ),
             ),
@@ -234,21 +234,21 @@ class _DashboardHomeView extends StatelessWidget {
           children: [
             _buildActionTile(
               context: context,
-              emoji: '🥹',
+              iconData: Icons.search_off_rounded,
               title: 'Report Lost',
               subtitle: 'Lost an item?',
-              gradientColors: const [AppColors.lostRedStart, AppColors.lostRedEnd],
-              shadowColor: AppColors.lostRedEnd,
+              gradientColors: const [AppColors.lostThemeStart, AppColors.lostThemeEnd],
+              shadowColor: AppColors.lostThemeStart,
               onTap: () => ReportItemModal.show(context, initialType: ReportType.lost),
             ),
             const SizedBox(width: 14),
             _buildActionTile(
               context: context,
-              emoji: '🎉',
+              iconData: Icons.task_alt_rounded,
               title: 'Report Found',
               subtitle: 'Found an item?',
-              gradientColors: const [AppColors.foundGreenStart, AppColors.foundGreenEnd],
-              shadowColor: AppColors.foundGreenEnd,
+              gradientColors: const [AppColors.foundThemeStart, AppColors.foundThemeEnd],
+              shadowColor: AppColors.foundThemeStart,
               onTap: () => ReportItemModal.show(context, initialType: ReportType.found),
             ),
           ],
@@ -259,7 +259,7 @@ class _DashboardHomeView extends StatelessWidget {
 
   Widget _buildActionTile({
     required BuildContext context,
-    required String emoji,
+    required IconData iconData,
     required String title,
     required String subtitle,
     required List<Color> gradientColors,
@@ -313,9 +313,7 @@ class _DashboardHomeView extends StatelessWidget {
                         color: Colors.white.withAlpha(40),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Center(
-                        child: Text(emoji, style: const TextStyle(fontSize: 20)),
-                      ),
+                      child: Icon(iconData, color: Colors.white, size: 22),
                     ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -372,7 +370,7 @@ class _DashboardHomeView extends StatelessWidget {
               icon: Icons.inventory_2_outlined,
               title: 'Lost Items',
               subtitle: '${controller.lostReports.length} reported',
-              themeColor: AppColors.lostRedEnd,
+              themeColor: AppColors.lostThemeStart,
               onTap: () => controller.setNavIndex(1),
             ),
             const SizedBox(width: 14),
@@ -380,7 +378,7 @@ class _DashboardHomeView extends StatelessWidget {
               icon: Icons.task_alt_rounded,
               title: 'Found Items',
               subtitle: '${controller.foundReports.length} reported',
-              themeColor: AppColors.foundGreenEnd,
+              themeColor: AppColors.foundThemeStart,
               onTap: () => controller.setNavIndex(2),
             ),
           ],

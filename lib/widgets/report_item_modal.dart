@@ -43,14 +43,25 @@ class _ReportItemModalState extends State<ReportItemModal> {
   File? _pickedImage;
   String? _imageFileName;
 
-  final List<String> _emojis = ['👛', '📱', '🐕', '🔑', '🎒', '🎧', '💻', '🕶️', '⌚', '💼'];
-  late String _selectedEmoji;
+  final List<IconData> _icons = [
+    Icons.account_balance_wallet,
+    Icons.smartphone,
+    Icons.pets,
+    Icons.vpn_key,
+    Icons.backpack,
+    Icons.headphones,
+    Icons.laptop,
+    Icons.visibility,
+    Icons.watch,
+    Icons.work,
+  ];
+  late IconData _selectedIcon;
 
   @override
   void initState() {
     super.initState();
     _selectedType = widget.initialType;
-    _selectedEmoji = _emojis[0];
+    _selectedIcon = _icons[0];
   }
 
   @override
@@ -192,7 +203,7 @@ class _ReportItemModalState extends State<ReportItemModal> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to pick image: $e'),
-            backgroundColor: AppColors.lostRedEnd,
+            backgroundColor: AppColors.errorRed,
           ),
         );
       }
@@ -238,7 +249,7 @@ class _ReportItemModalState extends State<ReportItemModal> {
       type: _selectedType,
       timeAgo: 'Just now',
       reward: rewardText.isNotEmpty ? (rewardText.contains('reward') ? rewardText : '$rewardText reward') : null,
-      emojiIcon: _selectedEmoji,
+      icon: _selectedIcon,
       iconBgHex: _selectedType == ReportType.lost ? 'FFF0F5' : 'E6F9F3',
     );
 
@@ -248,7 +259,7 @@ class _ReportItemModalState extends State<ReportItemModal> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Successfully reported: "$title"'),
-        backgroundColor: AppColors.foundGreenStart,
+        backgroundColor: AppColors.foundThemeStart,
       ),
     );
   }
@@ -456,7 +467,7 @@ class _ReportItemModalState extends State<ReportItemModal> {
               const SizedBox(height: 14),
             ],
 
-            // Category Emoji Selector
+            // Category Icon Selector
             const Text(
               'Select Item Icon',
               style: TextStyle(
@@ -470,12 +481,13 @@ class _ReportItemModalState extends State<ReportItemModal> {
               height: 52,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: _emojis.length,
+                itemCount: _icons.length,
                 itemBuilder: (context, index) {
-                  final emoji = _emojis[index];
-                  final isSelected = _selectedEmoji == emoji;
+                  final iconData = _icons[index];
+                  final isSelected = _selectedIcon == iconData;
+
                   return GestureDetector(
-                    onTap: () => setState(() => _selectedEmoji = emoji),
+                    onTap: () => setState(() => _selectedIcon = iconData),
                     child: Container(
                       margin: const EdgeInsets.only(right: 10),
                       padding: const EdgeInsets.all(10),
@@ -486,12 +498,18 @@ class _ReportItemModalState extends State<ReportItemModal> {
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: isSelected
-                              ? (isLost ? AppColors.lostRedEnd : AppColors.foundGreenEnd)
+                              ? (isLost ? AppColors.lostThemeStart : AppColors.foundThemeStart)
                               : AppColors.borderColor,
                           width: isSelected ? 2 : 1,
                         ),
                       ),
-                      child: Text(emoji, style: const TextStyle(fontSize: 22)),
+                      child: Icon(
+                        iconData, 
+                        size: 22, 
+                        color: isSelected 
+                            ? (isLost ? AppColors.lostThemeStart : AppColors.foundThemeStart) 
+                            : AppColors.textPrimary,
+                      ),
                     ),
                   );
                 },

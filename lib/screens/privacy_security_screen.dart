@@ -32,23 +32,23 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
     final confirm = _confirmPasswordController.text.trim();
 
     if (current.isEmpty || newPass.isEmpty || confirm.isEmpty) {
-      _showSnackBar('Please fill in all fields.', AppColors.lostRedEnd);
+      _showSnackBar('Please fill in all fields.', AppColors.errorRed);
       return;
     }
 
     if (newPass.length < 6) {
       _showSnackBar(
-          'New password must be at least 6 characters.', AppColors.lostRedEnd);
+          'New password must be at least 6 characters.', AppColors.errorRed);
       return;
     }
 
     if (newPass != confirm) {
-      _showSnackBar('New passwords do not match.', AppColors.lostRedEnd);
+      _showSnackBar('New passwords do not match.', AppColors.errorRed);
       return;
     }
 
     // Simulate password change
-    _showSnackBar('Password changed successfully!', AppColors.foundGreenEnd);
+    _showSnackBar('Password changed successfully!', AppColors.foundThemeEnd);
     _currentPasswordController.clear();
     _newPasswordController.clear();
     _confirmPasswordController.clear();

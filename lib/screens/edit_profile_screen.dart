@@ -146,7 +146,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Profile photo updated!'),
-              backgroundColor: AppColors.foundGreenEnd,
+              backgroundColor: AppColors.foundThemeEnd,
             ),
           );
         }
@@ -156,7 +156,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to pick image: $e'),
-            backgroundColor: AppColors.lostRedEnd,
+            backgroundColor: AppColors.errorRed,
           ),
         );
       }
@@ -286,7 +286,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Profile saved successfully!'),
-                      backgroundColor: AppColors.foundGreenEnd,
+                      backgroundColor: AppColors.foundThemeEnd,
                     ),
                   );
                   Navigator.of(context).pop();

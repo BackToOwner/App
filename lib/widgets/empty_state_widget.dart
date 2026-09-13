@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
 class EmptyStateWidget extends StatelessWidget {
-  final String emoji;
+  final IconData iconData;
   final String title;
   final String subtitle;
   final String buttonLabel;
@@ -12,7 +12,7 @@ class EmptyStateWidget extends StatelessWidget {
 
   const EmptyStateWidget({
     super.key,
-    required this.emoji,
+    required this.iconData,
     required this.title,
     required this.subtitle,
     required this.buttonLabel,
@@ -33,7 +33,7 @@ class EmptyStateWidget extends StatelessWidget {
               color: badgeBgColor,
               shape: BoxShape.circle,
             ),
-            child: Text(emoji, style: const TextStyle(fontSize: 48)),
+            child: Icon(iconData, size: 48, color: AppColors.textMuted),
           ),
           const SizedBox(height: 16),
           Text(

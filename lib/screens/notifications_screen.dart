@@ -247,15 +247,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   ({IconData icon, Color color}) _visualFor(_NotificationType type) {
     switch (type) {
       case _NotificationType.match:
-        return (icon: Icons.favorite_rounded, color: AppColors.foundGreenEnd);
+        return (icon: Icons.favorite_rounded, color: AppColors.foundThemeEnd);
       case _NotificationType.comment:
         return (icon: Icons.chat_bubble_rounded, color: AppColors.primaryBlue);
       case _NotificationType.returned:
-        return (icon: Icons.task_alt_rounded, color: AppColors.foundGreenEnd);
+        return (icon: Icons.task_alt_rounded, color: AppColors.foundThemeEnd);
       case _NotificationType.info:
         return (icon: Icons.trending_up_rounded, color: AppColors.primaryBlue);
       case _NotificationType.reminder:
-        return (icon: Icons.notifications_active_rounded, color: AppColors.lostRedEnd);
+        return (icon: Icons.notifications_active_rounded, color: AppColors.errorRed);
     }
   }
 }

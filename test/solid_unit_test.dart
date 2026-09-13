@@ -41,7 +41,7 @@ void main() {
         area: 'Downtown',
         type: ReportType.lost,
         timeAgo: '1h ago',
-        emojiIcon: '👛',
+        icon: Icons.account_balance_wallet,
         iconBgHex: 'FFF0F5',
       );
 
@@ -52,7 +52,7 @@ void main() {
         area: 'Uptown',
         type: ReportType.found,
         timeAgo: '30m ago',
-        emojiIcon: '🔑',
+        icon: Icons.vpn_key,
         iconBgHex: 'F0FDF4',
       );
 
@@ -76,7 +76,7 @@ void main() {
         area: 'Central Park',
         type: ReportType.lost,
         timeAgo: '10m ago',
-        emojiIcon: '👛',
+        icon: Icons.account_balance_wallet,
         iconBgHex: 'FFF0F5',
       );
 
@@ -87,7 +87,7 @@ void main() {
         area: 'Central Station',
         type: ReportType.found,
         timeAgo: '5m ago',
-        emojiIcon: '📱',
+        icon: Icons.smartphone,
         iconBgHex: 'F0F7FF',
       );
 
@@ -134,7 +134,7 @@ void main() {
         area: 'Library',
         type: ReportType.found,
         timeAgo: '1h ago',
-        emojiIcon: '🎧',
+        icon: Icons.headphones,
         iconBgHex: 'F0F7FF',
       );
 
@@ -157,7 +157,7 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: EmptyStateWidget(
-              emoji: '🔍',
+              iconData: Icons.search,
               title: 'No Data Available',
               subtitle: 'Try adding a new record.',
               buttonLabel: 'Add Record',
@@ -230,7 +230,7 @@ void main() {
           area: 'Main St',
           type: ReportType.lost,
           timeAgo: '1h ago',
-          emojiIcon: '🔑',
+          icon: Icons.vpn_key,
           iconBgHex: 'FFF0F5',
         ),
       ]);
@@ -248,7 +248,7 @@ void main() {
       );
 
       await tester.pumpAndSettle();
-      expect(find.text('Lost Items 🥹'), findsOneWidget);
+      expect(find.text('Lost Items'), findsOneWidget);
       expect(find.text('Lost Keys'), findsOneWidget);
     });
   });

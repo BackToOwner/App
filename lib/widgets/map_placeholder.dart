@@ -111,7 +111,7 @@ class _MapPlaceholderWidgetState extends State<MapPlaceholderWidget> {
                       width: 10,
                       height: 10,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF1D4ED8),
+                        color: AppColors.primaryBlue,
                         shape: BoxShape.circle,
                       ),
                     ),
