@@ -104,8 +104,10 @@ class ApiReportRepository extends ValueNotifier<List<ReportItem>> implements IRe
       try {
         final withImage = await _api.uploadFile('/reports/${item.id}/images', imagePath);
         item = ReportItem.fromJson(withImage);
-      } on ApiException {
-        // Keep the report; the user can add the photo again from the detail screen.
+      } on ApiException catch (e) {
+        // Keep the report; the user can add the photo again from the detail screen. The upload
+        // failing silently once hid a bad Content-Type for a while, so at least say so in the log.
+        debugPrint('Report ${item.id}: image upload failed — ${e.message}');
       }
     }
 

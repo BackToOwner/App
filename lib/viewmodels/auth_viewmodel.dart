@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/app_user.dart';
 import '../services/api/api_exception.dart';
 import '../services/auth/auth_service_interface.dart';
+import 'dashboard_viewmodel.dart';
+import 'profile_viewmodel.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final IAuthService _authService;
@@ -90,9 +93,19 @@ class AuthViewModel extends ChangeNotifier {
             );
 
       passwordController.clear();
-      if (context.mounted) {
-        Navigator.of(context).pushReplacementNamed('/dashboard');
+      if (!context.mounted) return user;
+
+      // Mirror what the splash screen does for a restored session. Without this, signing out and
+      // back in as someone else leaves the previous account's profile on screen.
+      context.read<ProfileViewModel>().setUser(user);
+      final dashboard = context.read<DashboardViewModel>();
+      final navigator = Navigator.of(context);
+      try {
+        await dashboard.refresh();
+      } on ApiException {
+        // The sign-in itself succeeded; an empty feed can be pulled to refresh on the dashboard.
       }
+      navigator.pushReplacementNamed('/dashboard');
       return user;
     } on ApiException catch (e) {
       _errorMessage = e.message;

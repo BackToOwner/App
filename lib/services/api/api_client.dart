@@ -179,9 +179,24 @@ class ApiClient {
     String field = 'images',
   }) async {
     final form = FormData.fromMap({
-      field: await MultipartFile.fromFile(filePath),
+      field: await MultipartFile.fromFile(filePath, contentType: _mediaTypeFor(filePath)),
     });
     final body = await _send('POST', path, data: form);
     return body['data'] as Map<String, dynamic>;
+  }
+
+  /// Without this the part goes out as `application/octet-stream` (Dio's default when no
+  /// contentType is given) and the backend's upload filter rejects it with
+  /// "Only JPG, PNG and WebP images are allowed" — the bytes are fine, only the header is wrong.
+  static DioMediaType _mediaTypeFor(String filePath) {
+    final ext = filePath.split('.').last.toLowerCase();
+    switch (ext) {
+      case 'png':
+        return DioMediaType('image', 'png');
+      case 'webp':
+        return DioMediaType('image', 'webp');
+      default:
+        return DioMediaType('image', 'jpeg');
+    }
   }
 }
