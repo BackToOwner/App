@@ -190,22 +190,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.borderColor, width: 1),
       ),
-      child: ListTile(
-        leading: Icon(icon, color: textColor ?? AppColors.primaryBlue),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: textColor ?? AppColors.textPrimary,
+      // ListTile paints its own background and tap ripple on the nearest Material ancestor, not
+      // on itself — without this, the Container's white fill sits in between and hides both.
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          leading: Icon(icon, color: textColor ?? AppColors.primaryBlue),
+          title: Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: textColor ?? AppColors.textPrimary,
+            ),
           ),
+          trailing: const Icon(
+            Icons.chevron_right,
+            size: 18,
+            color: AppColors.textMuted,
+          ),
+          onTap: onTap,
         ),
-        trailing: const Icon(
-          Icons.chevron_right,
-          size: 18,
-          color: AppColors.textMuted,
-        ),
-        onTap: onTap,
       ),
     );
   }
