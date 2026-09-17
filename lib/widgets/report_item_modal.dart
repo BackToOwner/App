@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/report_item.dart';
+import '../services/api/api_exception.dart';
 import '../controllers/dashboard_controller.dart';
 import 'custom_text_field.dart';
 import 'gradient_button.dart';
@@ -43,25 +44,16 @@ class _ReportItemModalState extends State<ReportItemModal> {
   File? _pickedImage;
   String? _imageFileName;
 
-  final List<IconData> _icons = [
-    Icons.account_balance_wallet,
-    Icons.smartphone,
-    Icons.pets,
-    Icons.vpn_key,
-    Icons.backpack,
-    Icons.headphones,
-    Icons.laptop,
-    Icons.visibility,
-    Icons.watch,
-    Icons.work,
-  ];
-  late IconData _selectedIcon;
+  /// The picker doubles as the category chooser: the server derives the card's emoji and swatch
+  /// from the category, so sending the id behind the chosen icon is what makes the choice stick.
+  final List<String> _categories = ReportItem.categoryIcons.keys.toList();
+  late String _selectedCategory;
 
   @override
   void initState() {
     super.initState();
     _selectedType = widget.initialType;
-    _selectedIcon = _icons[0];
+    _selectedCategory = _categories.first;
   }
 
   @override
@@ -210,58 +202,73 @@ class _ReportItemModalState extends State<ReportItemModal> {
     }
   }
 
-  void _submitReport() {
+  bool _isSubmitting = false;
+
+  Future<void> _submitReport() async {
+    if (_isSubmitting) return;
+
     final title = _titleController.text.trim();
     final itemColor = _colorController.text.trim();
     final campus = _campusController.text.trim();
     final area = _areaController.text.trim();
     final additionalDetails = _additionalDetailsController.text.trim();
     final rewardText = _rewardController.text.trim();
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
 
-    if (title.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter an item title.')),
+    if (title.length < 3) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Please enter an item title (at least 3 characters).')),
       );
       return;
     }
 
     if (campus.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(content: Text('Please enter the campus.')),
       );
       return;
     }
 
     if (area.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(content: Text('Please enter the area.')),
       );
       return;
     }
 
-    final newItem = ReportItem(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: title,
-      itemColor: itemColor.isNotEmpty ? itemColor : null,
-      campus: campus,
-      area: area,
-      additionalDetails: additionalDetails.isNotEmpty ? additionalDetails : null,
-      type: _selectedType,
-      timeAgo: 'Just now',
-      reward: rewardText.isNotEmpty ? (rewardText.contains('reward') ? rewardText : '$rewardText reward') : null,
-      icon: _selectedIcon,
-      iconBgHex: _selectedType == ReportType.lost ? 'FFF0F5' : 'E6F9F3',
-    );
+    // The field is free text ("$50", "5000 reward"); keep only the number the API expects.
+    final rewardDigits = rewardText.replaceAll(RegExp(r'[^0-9.]'), '');
+    final reward = rewardDigits.isEmpty ? null : double.tryParse(rewardDigits);
 
-    context.read<DashboardController>().addReport(newItem);
-    Navigator.of(context).pop();
+    setState(() => _isSubmitting = true);
+    try {
+      await context.read<DashboardController>().addReport(
+            title: title,
+            type: _selectedType,
+            campus: campus,
+            area: area,
+            itemColor: itemColor.isNotEmpty ? itemColor : null,
+            additionalDetails: additionalDetails.isNotEmpty ? additionalDetails : null,
+            category: _selectedCategory,
+            reward: reward,
+            imagePath: _pickedImage?.path,
+          );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Successfully reported: "$title"'),
-        backgroundColor: AppColors.foundThemeStart,
-      ),
-    );
+      navigator.pop();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Successfully reported: "$title"'),
+          backgroundColor: AppColors.foundThemeStart,
+        ),
+      );
+    } on ApiException catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: AppColors.errorRed),
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -298,7 +305,7 @@ class _ReportItemModalState extends State<ReportItemModal> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  isLost ? 'Report Lost Item 🥹' : 'Report Found Item 🎉',
+                  isLost ? 'Report Lost Item' : 'Report Found Item',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -481,13 +488,14 @@ class _ReportItemModalState extends State<ReportItemModal> {
               height: 52,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: _icons.length,
+                itemCount: _categories.length,
                 itemBuilder: (context, index) {
-                  final iconData = _icons[index];
-                  final isSelected = _selectedIcon == iconData;
-
+                  final category = _categories[index];
+                  final isSelected = _selectedCategory == category;
+                  final themeColor =
+                      isLost ? AppColors.lostThemeStart : AppColors.foundThemeStart;
                   return GestureDetector(
-                    onTap: () => setState(() => _selectedIcon = iconData),
+                    onTap: () => setState(() => _selectedCategory = category),
                     child: Container(
                       margin: const EdgeInsets.only(right: 10),
                       padding: const EdgeInsets.all(10),
@@ -497,18 +505,14 @@ class _ReportItemModalState extends State<ReportItemModal> {
                             : AppColors.fieldBackground,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: isSelected
-                              ? (isLost ? AppColors.lostThemeStart : AppColors.foundThemeStart)
-                              : AppColors.borderColor,
+                          color: isSelected ? themeColor : AppColors.borderColor,
                           width: isSelected ? 2 : 1,
                         ),
                       ),
                       child: Icon(
-                        iconData, 
-                        size: 22, 
-                        color: isSelected 
-                            ? (isLost ? AppColors.lostThemeStart : AppColors.foundThemeStart) 
-                            : AppColors.textPrimary,
+                        ReportItem.iconForCategory(category),
+                        size: 22,
+                        color: isSelected ? themeColor : AppColors.textPrimary,
                       ),
                     ),
                   );
@@ -521,7 +525,8 @@ class _ReportItemModalState extends State<ReportItemModal> {
             GradientButton(
               text: isLost ? 'Upload Lost Report' : 'Upload Found Report',
               gradient: isLost ? AppColors.reportLostGradient : AppColors.reportFoundGradient,
-              onPressed: _submitReport,
+              // Disabled mid-flight so a double tap cannot file the report twice.
+              onPressed: _isSubmitting ? null : _submitReport,
             ),
           ],
         ),

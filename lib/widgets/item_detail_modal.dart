@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/report_item.dart';
+import '../services/api/api_exception.dart';
 import '../controllers/dashboard_controller.dart';
 import 'gradient_button.dart';
 
@@ -67,7 +68,7 @@ class ItemDetailModal extends StatelessWidget {
                   child: Icon(
                     item.icon,
                     size: 32,
-                    color: item.type == ReportType.lost ? AppColors.lostThemeStart : AppColors.foundThemeStart,
+                    color: isLost ? AppColors.lostThemeStart : AppColors.foundThemeStart,
                   ),
                 ),
               ),
@@ -140,14 +141,25 @@ class ItemDetailModal extends StatelessWidget {
             _buildDetailRow(Icons.palette_outlined, 'Color', item.itemColor!),
             const SizedBox(height: 12),
           ],
-          _buildDetailRow(Icons.school_outlined, 'Campus', item.campus),
-          const SizedBox(height: 12),
-          _buildDetailRow(Icons.place_outlined, 'Area', item.area),
-          if (item.additionalDetails != null && item.additionalDetails!.isNotEmpty) ...[
+          // Campus and area are shown separately when the report has them; reports filed before
+          // the split — and anything from the admin dashboard — only have the one location line.
+          if (item.campus.isNotEmpty || item.area.isNotEmpty) ...[
+            if (item.campus.isNotEmpty) ...[
+              _buildDetailRow(Icons.school_outlined, 'Campus', item.campus),
+              const SizedBox(height: 12),
+            ],
+            if (item.area.isNotEmpty) ...[
+              _buildDetailRow(Icons.place_outlined, 'Area', item.area),
+              const SizedBox(height: 12),
+            ],
+          ] else ...[
+            _buildDetailRow(Icons.location_on_outlined, 'Location', item.location),
             const SizedBox(height: 12),
-            _buildDetailRow(Icons.info_outline, 'Details', item.additionalDetails!),
           ],
-          const SizedBox(height: 12),
+          if (item.additionalDetails != null && item.additionalDetails!.isNotEmpty) ...[
+            _buildDetailRow(Icons.info_outline, 'Details', item.additionalDetails!),
+            const SizedBox(height: 12),
+          ],
           _buildDetailRow(Icons.access_time, 'Reported', item.timeAgo),
           if (item.reward != null) ...[
             const SizedBox(height: 12),
@@ -174,15 +186,24 @@ class ItemDetailModal extends StatelessWidget {
           ),
           const SizedBox(height: 10),
 
-          // Delete Option Button
+          // Delete is owner-only on the server; hiding it elsewhere avoids a guaranteed 403.
+          if (item.isMine)
           Center(
             child: TextButton.icon(
-              onPressed: () {
-                context.read<DashboardController>().deleteReport(item.id);
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Removed "${item.displayTitle}" from list.')),
-                );
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                final navigator = Navigator.of(context);
+                try {
+                  await context.read<DashboardController>().deleteReport(item.id);
+                  navigator.pop();
+                  messenger.showSnackBar(
+                    SnackBar(content: Text('Deleted "${item.displayTitle}".')),
+                  );
+                } on ApiException catch (e) {
+                  messenger.showSnackBar(
+                    SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+                  );
+                }
               },
               icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
               label: const Text('Delete Report', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),

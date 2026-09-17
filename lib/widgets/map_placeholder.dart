@@ -1,18 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../constants/app_colors.dart';
+import '../models/report_item.dart';
 
-/// Nearby Items Map widget supporting both Google Maps & high-fidelity mock fallback.
+/// Nearby Items Map widget supporting both Google Maps and a styled fallback.
 ///
-/// To enable live Google Maps integration:
+/// Currently unused — the dashboard's map section was removed — but kept wired to real data so
+/// re-enabling it does not resurrect invented markers. Pass the reports to plot; those without
+/// coordinates are skipped.
+///
+/// To enable live Google Maps:
 /// 1. Add your Google Maps API key to AndroidManifest.xml & Info.plist.
 /// 2. Set [useLiveGoogleMap] to `true`.
 class MapPlaceholderWidget extends StatefulWidget {
   final bool useLiveGoogleMap;
+  final List<ReportItem> reports;
 
   const MapPlaceholderWidget({
     super.key,
     this.useLiveGoogleMap = false,
+    this.reports = const [],
   });
 
   @override
@@ -20,25 +27,27 @@ class MapPlaceholderWidget extends StatefulWidget {
 }
 
 class _MapPlaceholderWidgetState extends State<MapPlaceholderWidget> {
-  static const LatLng _center = LatLng(40.7128, -74.0060); // New York City default
+  /// Fallback only — used when no report carries coordinates.
+  static const LatLng _fallbackCenter = LatLng(6.9271, 79.8612); // Colombo
 
-  final Set<Marker> _markers = {
-    const Marker(
-      markerId: MarkerId('lost_wallet'),
-      position: LatLng(40.7135, -74.0080),
-      infoWindow: InfoWindow(title: 'Black Leather Wallet'),
-    ),
-    const Marker(
-      markerId: MarkerId('found_iphone'),
-      position: LatLng(40.7115, -74.0040),
-      infoWindow: InfoWindow(title: 'iPhone 15 Pro'),
-    ),
-    const Marker(
-      markerId: MarkerId('lost_dog'),
-      position: LatLng(40.7145, -74.0020),
-      infoWindow: InfoWindow(title: 'Golden Retriever'),
-    ),
-  };
+  Iterable<ReportItem> get _located =>
+      widget.reports.where((r) => r.lat != null && r.lng != null);
+
+  /// Centres on the first located report, so the map opens where the items actually are.
+  LatLng get _center {
+    final first = _located.isEmpty ? null : _located.first;
+    return first == null ? _fallbackCenter : LatLng(first.lat!, first.lng!);
+  }
+
+  Set<Marker> get _markers => _located
+      .map(
+        (r) => Marker(
+          markerId: MarkerId(r.id),
+          position: LatLng(r.lat!, r.lng!),
+          infoWindow: InfoWindow(title: r.title, snippet: r.location),
+        ),
+      )
+      .toSet();
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +72,7 @@ class _MapPlaceholderWidgetState extends State<MapPlaceholderWidget> {
           children: [
             if (widget.useLiveGoogleMap)
               GoogleMap(
-                initialCameraPosition: const CameraPosition(
+                initialCameraPosition: CameraPosition(
                   target: _center,
                   zoom: 14.0,
                 ),

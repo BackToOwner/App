@@ -1,16 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
+import '../services/auth/auth_service_interface.dart';
 import '../controllers/dashboard_controller.dart';
+import '../controllers/profile_controller.dart';
 import 'edit_profile_screen.dart';
 import 'help_support_screen.dart';
+import 'my_reports_screen.dart';
 import 'privacy_security_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Refresh from the server so counters stay accurate after filing or returning an item.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProfileController>().load();
+    });
+  }
+
+  Future<void> _signOut() async {
+    final navigator = Navigator.of(context);
+    await context.read<IAuthService>().signOut();
+    if (!mounted) return;
+    navigator.pushNamedAndRemoveUntil('/auth', (route) => false);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final user = context.watch<ProfileController>().user;
+
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       appBar: AppBar(
@@ -50,32 +76,51 @@ class ProfileScreen extends StatelessWidget {
                   color: AppColors.primaryCyan,
                   shape: BoxShape.circle,
                 ),
-                child: const Center(
-                  child: Text(
-                    'A',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 38,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
+                child: user?.avatar != null
+                    ? ClipOval(
+                        child: Image.network(
+                          user!.avatar!,
+                          width: 84,
+                          height: 84,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, e, st) => _avatarInitial(user.initial),
+                        ),
+                      )
+                    : _avatarInitial(user?.initial ?? '?'),
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Ahmed Khalid',
-              style: TextStyle(
+            Text(
+              user?.name ?? 'Loading…',
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
                 color: AppColors.textPrimary,
               ),
             ),
-            const Text(
-              'ahmed.khalid@example.com',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            Text(
+              user?.email ?? '',
+              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 18),
+
+            // Real activity counters, straight from the user's row.
+            if (user != null)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildStat('Reported', user.itemsReported),
+                  _buildStat('Found', user.itemsFound),
+                  _buildStat('Returned', user.itemsReturned),
+                ],
+              ),
+            const SizedBox(height: 24),
+
+            _buildProfileOption(Icons.description_outlined, 'My Reports', () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const MyReportsScreen()),
+              );
+            }),
 
             // ── Edit Profile ──
             _buildProfileOption(Icons.edit, 'Edit Profile', () {
@@ -103,14 +148,34 @@ class ProfileScreen extends StatelessWidget {
               );
             }),
             const SizedBox(height: 16),
-            _buildProfileOption(Icons.logout, 'Log Out', () {
-              Navigator.of(context).pushReplacementNamed('/auth');
-            }, textColor: Colors.red),
+            _buildProfileOption(Icons.logout, 'Log Out', _signOut, textColor: Colors.red),
           ],
         ),
       ),
     );
   }
+
+  Widget _avatarInitial(String initial) => Center(
+        child: Text(
+          initial,
+          style: const TextStyle(color: Colors.white, fontSize: 38, fontWeight: FontWeight.w800),
+        ),
+      );
+
+  Widget _buildStat(String label, int value) => Column(
+        children: [
+          Text(
+            '$value',
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: AppColors.primaryBlue,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        ],
+      );
 
   Widget _buildProfileOption(
     IconData icon,
@@ -125,22 +190,29 @@ class ProfileScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.borderColor, width: 1),
       ),
-      child: ListTile(
-        leading: Icon(icon, color: textColor ?? AppColors.primaryBlue),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: textColor ?? AppColors.textPrimary,
+      // ListTile paints its own background and tap ripple on the nearest Material ancestor, not
+      // on itself — without this, the Container's white fill sits in between and hides both.
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          leading: Icon(icon, color: textColor ?? AppColors.primaryBlue),
+          title: Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: textColor ?? AppColors.textPrimary,
+            ),
           ),
+          trailing: const Icon(
+            Icons.chevron_right,
+            size: 18,
+            color: AppColors.textMuted,
+          ),
+          onTap: onTap,
         ),
-        trailing: const Icon(
-          Icons.chevron_right,
-          size: 18,
-          color: AppColors.textMuted,
-        ),
-        onTap: onTap,
       ),
     );
   }
