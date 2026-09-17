@@ -3,13 +3,13 @@ import 'package:provider/provider.dart';
 import '../models/app_user.dart';
 import '../services/api/api_exception.dart';
 import '../services/auth/auth_service_interface.dart';
-import 'dashboard_viewmodel.dart';
-import 'profile_viewmodel.dart';
+import 'dashboard_controller.dart';
+import 'profile_controller.dart';
 
-class AuthViewModel extends ChangeNotifier {
+class AuthController extends ChangeNotifier {
   final IAuthService _authService;
 
-  AuthViewModel(this._authService);
+  AuthController(this._authService);
 
   bool _isSignIn = true;
   bool _obscurePassword = true;
@@ -97,8 +97,8 @@ class AuthViewModel extends ChangeNotifier {
 
       // Mirror what the splash screen does for a restored session. Without this, signing out and
       // back in as someone else leaves the previous account's profile on screen.
-      context.read<ProfileViewModel>().setUser(user);
-      final dashboard = context.read<DashboardViewModel>();
+      context.read<ProfileController>().setUser(user);
+      final dashboard = context.read<DashboardController>();
       final navigator = Navigator.of(context);
       try {
         await dashboard.refresh();

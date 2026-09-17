@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/report_item.dart';
-import '../viewmodels/dashboard_viewmodel.dart';
-import '../viewmodels/profile_viewmodel.dart';
-import '../viewmodels/stats_viewmodel.dart';
+import '../controllers/dashboard_controller.dart';
+import '../controllers/profile_controller.dart';
+import '../controllers/stats_controller.dart';
 import '../widgets/custom_bottom_nav.dart';
 
 import '../widgets/report_item_modal.dart';
@@ -18,12 +18,12 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<DashboardViewModel>(
-      builder: (context, viewModel, child) {
+    return Consumer<DashboardController>(
+      builder: (context, controller, child) {
         return Scaffold(
           backgroundColor: AppColors.scaffoldBackground,
           body: IndexedStack(
-            index: viewModel.currentNavIndex,
+            index: controller.currentNavIndex,
             children: const [
               _DashboardHomeView(),
               LostScreen(),
@@ -32,8 +32,8 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
           bottomNavigationBar: CustomBottomNav(
-            currentIndex: viewModel.currentNavIndex,
-            onTap: (index) => viewModel.setNavIndex(index),
+            currentIndex: controller.currentNavIndex,
+            onTap: (index) => controller.setNavIndex(index),
           ),
         );
       },
@@ -58,8 +58,8 @@ class _DashboardHomeViewState extends State<_DashboardHomeView> {
   Future<void> _load() async {
     // Both are independent; a failing stats call must not stop the feed loading.
     await Future.wait([
-      context.read<DashboardViewModel>().refresh(),
-      context.read<StatsViewModel>().load(),
+      context.read<DashboardController>().refresh(),
+      context.read<StatsController>().load(),
     ]);
   }
 
@@ -173,7 +173,7 @@ class _DashboardHomeViewState extends State<_DashboardHomeView> {
                   // Avatar — taps through to the Profile tab
                   _HeaderIconButton(
                     tooltip: 'Profile',
-                    onTap: () => context.read<DashboardViewModel>().setNavIndex(3),
+                    onTap: () => context.read<DashboardController>().setNavIndex(3),
                     gradient: const LinearGradient(
                       colors: [Color(0xFF00D2B5), Color(0xFF00A99D)],
                       begin: Alignment.topLeft,
@@ -204,7 +204,7 @@ class _DashboardHomeViewState extends State<_DashboardHomeView> {
               ),
               const SizedBox(height: 3),
               Text(
-                context.watch<ProfileViewModel>().user?.name ?? '',
+                context.watch<ProfileController>().user?.name ?? '',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 25,
@@ -239,7 +239,7 @@ class _DashboardHomeViewState extends State<_DashboardHomeView> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFF1246A3).withAlpha(12),
+                color: AppColors.primaryBlue.withAlpha(12),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Text(
@@ -247,7 +247,7 @@ class _DashboardHomeViewState extends State<_DashboardHomeView> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1246A3),
+                  color: AppColors.primaryBlue,
                 ),
               ),
             ),
@@ -258,21 +258,21 @@ class _DashboardHomeViewState extends State<_DashboardHomeView> {
           children: [
             _buildActionTile(
               context: context,
-              emoji: '🥹',
+              iconData: Icons.search_off_rounded,
               title: 'Report Lost',
               subtitle: 'Lost an item?',
-              gradientColors: const [AppColors.lostRedStart, AppColors.lostRedEnd],
-              shadowColor: AppColors.lostRedEnd,
+              gradientColors: const [AppColors.lostThemeStart, AppColors.lostThemeEnd],
+              shadowColor: AppColors.lostThemeStart,
               onTap: () => ReportItemModal.show(context, initialType: ReportType.lost),
             ),
             const SizedBox(width: 14),
             _buildActionTile(
               context: context,
-              emoji: '🎉',
+              iconData: Icons.task_alt_rounded,
               title: 'Report Found',
               subtitle: 'Found an item?',
-              gradientColors: const [AppColors.foundGreenStart, AppColors.foundGreenEnd],
-              shadowColor: AppColors.foundGreenEnd,
+              gradientColors: const [AppColors.foundThemeStart, AppColors.foundThemeEnd],
+              shadowColor: AppColors.foundThemeStart,
               onTap: () => ReportItemModal.show(context, initialType: ReportType.found),
             ),
           ],
@@ -283,7 +283,7 @@ class _DashboardHomeViewState extends State<_DashboardHomeView> {
 
   Widget _buildActionTile({
     required BuildContext context,
-    required String emoji,
+    required IconData iconData,
     required String title,
     required String subtitle,
     required List<Color> gradientColors,
@@ -337,9 +337,7 @@ class _DashboardHomeViewState extends State<_DashboardHomeView> {
                         color: Colors.white.withAlpha(40),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Center(
-                        child: Text(emoji, style: const TextStyle(fontSize: 20)),
-                      ),
+                      child: Icon(iconData, color: Colors.white, size: 22),
                     ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,7 +373,7 @@ class _DashboardHomeViewState extends State<_DashboardHomeView> {
 
   // ─── BROWSE ITEMS ───────────────────────────────────────────────────────────
   Widget _buildBrowseItemsSection(BuildContext context) {
-    final viewModel = context.watch<DashboardViewModel>();
+    final controller = context.watch<DashboardController>();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -395,17 +393,17 @@ class _DashboardHomeViewState extends State<_DashboardHomeView> {
             _buildBrowseTile(
               icon: Icons.inventory_2_outlined,
               title: 'Lost Items',
-              subtitle: '${viewModel.lostReports.length} reported',
-              themeColor: AppColors.lostRedEnd,
-              onTap: () => viewModel.setNavIndex(1),
+              subtitle: '${controller.lostReports.length} reported',
+              themeColor: AppColors.lostThemeStart,
+              onTap: () => controller.setNavIndex(1),
             ),
             const SizedBox(width: 14),
             _buildBrowseTile(
               icon: Icons.task_alt_rounded,
               title: 'Found Items',
-              subtitle: '${viewModel.foundReports.length} reported',
-              themeColor: AppColors.foundGreenEnd,
-              onTap: () => viewModel.setNavIndex(2),
+              subtitle: '${controller.foundReports.length} reported',
+              themeColor: AppColors.foundThemeStart,
+              onTap: () => controller.setNavIndex(2),
             ),
           ],
         ),
@@ -482,7 +480,7 @@ class _DashboardHomeViewState extends State<_DashboardHomeView> {
 
   // ─── BOTTOM STATS ───────────────────────────────────────────────────────────
   Widget _buildBottomStatsSection(BuildContext context) {
-    final stats = context.watch<StatsViewModel>();
+    final stats = context.watch<StatsController>();
     return Container(
       decoration: const BoxDecoration(
         gradient: AppColors.dashboardHeaderGradient,

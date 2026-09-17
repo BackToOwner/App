@@ -14,12 +14,12 @@ import 'services/auth/api_auth_service.dart';
 import 'services/auth/auth_service_interface.dart';
 import 'services/repository/api_report_repository.dart';
 import 'services/repository/report_repository_interface.dart';
-import 'viewmodels/auth_viewmodel.dart';
-import 'viewmodels/dashboard_viewmodel.dart';
-import 'viewmodels/notifications_viewmodel.dart';
-import 'viewmodels/profile_viewmodel.dart';
-import 'viewmodels/stats_viewmodel.dart';
-import 'viewmodels/support_viewmodel.dart';
+import 'controllers/auth_controller.dart';
+import 'controllers/dashboard_controller.dart';
+import 'controllers/notifications_controller.dart';
+import 'controllers/profile_controller.dart';
+import 'controllers/stats_controller.dart';
+import 'controllers/support_controller.dart';
 
 /// Lets the API client bounce the user to the auth screen when a session dies mid-use, without
 /// every screen having to check for it.
@@ -65,24 +65,24 @@ class _BackToOwnerAppState extends State<BackToOwnerApp> {
         Provider<IAuthService>.value(value: _authService),
         ListenableProvider<IReportRepository>.value(value: _reportRepository),
 
-        // 3. ViewModels, receiving the injected abstractions
-        ChangeNotifierProvider<AuthViewModel>(
-          create: (context) => AuthViewModel(context.read<IAuthService>()),
+        // 3. Controllers, receiving the injected abstractions
+        ChangeNotifierProvider<AuthController>(
+          create: (context) => AuthController(context.read<IAuthService>()),
         ),
-        ChangeNotifierProvider<DashboardViewModel>(
-          create: (context) => DashboardViewModel(context.read<IReportRepository>()),
+        ChangeNotifierProvider<DashboardController>(
+          create: (context) => DashboardController(context.read<IReportRepository>()),
         ),
-        ChangeNotifierProvider<ProfileViewModel>(
-          create: (context) => ProfileViewModel(context.read<ApiClient>(), context.read<IAuthService>()),
+        ChangeNotifierProvider<ProfileController>(
+          create: (context) => ProfileController(context.read<ApiClient>(), context.read<IAuthService>()),
         ),
-        ChangeNotifierProvider<NotificationsViewModel>(
-          create: (context) => NotificationsViewModel(context.read<ApiClient>()),
+        ChangeNotifierProvider<NotificationsController>(
+          create: (context) => NotificationsController(context.read<ApiClient>()),
         ),
-        ChangeNotifierProvider<StatsViewModel>(
-          create: (context) => StatsViewModel(context.read<ApiClient>()),
+        ChangeNotifierProvider<StatsController>(
+          create: (context) => StatsController(context.read<ApiClient>()),
         ),
-        ChangeNotifierProvider<SupportViewModel>(
-          create: (context) => SupportViewModel(context.read<ApiClient>()),
+        ChangeNotifierProvider<SupportController>(
+          create: (context) => SupportController(context.read<ApiClient>()),
         ),
       ],
       child: MaterialApp(

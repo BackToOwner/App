@@ -105,6 +105,12 @@ export function serializeReport(row, viewerId = null, { images } = {}) {
     status: row.status,
     description: row.description,
     location: row.location,
+    // The parts behind `location`. Null on reports the admin dashboard filed, which is why the
+    // client falls back to `location` rather than rendering an empty campus.
+    campus: row.campus,
+    area: row.area,
+    itemColor: row.item_color,
+    additionalDetails: row.additional_details,
     coordinates: row.lat != null && row.lng != null ? { lat: row.lat, lng: row.lng } : null,
     distanceKm: row.distance_km,
     occurredAt: toIso(row.occurred_at),

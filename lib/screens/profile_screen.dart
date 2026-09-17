@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../services/auth/auth_service_interface.dart';
-import '../viewmodels/dashboard_viewmodel.dart';
-import '../viewmodels/profile_viewmodel.dart';
+import '../controllers/dashboard_controller.dart';
+import '../controllers/profile_controller.dart';
 import 'edit_profile_screen.dart';
 import 'help_support_screen.dart';
 import 'my_reports_screen.dart';
@@ -22,7 +22,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     // Refresh from the server so counters stay accurate after filing or returning an item.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProfileViewModel>().load();
+      context.read<ProfileController>().load();
     });
   }
 
@@ -35,7 +35,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<ProfileViewModel>().user;
+    final user = context.watch<ProfileController>().user;
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
@@ -43,7 +43,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            context.read<DashboardViewModel>().setNavIndex(0);
+            context.read<DashboardController>().setNavIndex(0);
           },
         ),
         title: const Text(

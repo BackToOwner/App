@@ -8,13 +8,13 @@ import 'package:back_to_owner/services/api/api_exception.dart';
 import 'package:back_to_owner/services/auth/auth_service_interface.dart';
 import 'package:back_to_owner/services/filter/report_filter_strategy.dart';
 import 'package:back_to_owner/services/repository/report_repository_interface.dart';
-import 'package:back_to_owner/viewmodels/auth_viewmodel.dart';
-import 'package:back_to_owner/viewmodels/dashboard_viewmodel.dart';
+import 'package:back_to_owner/controllers/auth_controller.dart';
+import 'package:back_to_owner/controllers/dashboard_controller.dart';
 import 'package:back_to_owner/widgets/custom_segmented_control.dart';
 import 'package:back_to_owner/widgets/empty_state_widget.dart';
 import 'package:back_to_owner/widgets/section_header.dart';
 
-/// Stands in for the real service so the view-models can be tested without a server.
+/// Stands in for the real service so the controllers can be tested without a server.
 /// Unlike the MockAuthService it replaces, it actually checks the password — the old mock
 /// returned true for any input, which is why an empty password used to sign a user in.
 class FakeAuthService implements IAuthService {
@@ -114,7 +114,10 @@ class FakeReportRepository extends ValueNotifier<List<ReportItem>> implements IR
   Future<ReportItem> addReport({
     required String title,
     required ReportType type,
-    required String location,
+    required String campus,
+    required String area,
+    String? itemColor,
+    String? additionalDetails,
     String? description,
     String? category,
     double? reward,
@@ -125,7 +128,11 @@ class FakeReportRepository extends ValueNotifier<List<ReportItem>> implements IR
     final item = ReportItem(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       title: title,
-      location: location,
+      campus: campus,
+      area: area,
+      itemColor: itemColor,
+      additionalDetails: additionalDetails,
+      category: category ?? 'other',
       type: type,
       rewardAmount: reward,
       isMine: true,
@@ -145,13 +152,15 @@ ReportItem _item({
   required String id,
   required String title,
   required ReportType type,
-  String location = 'Somewhere',
+  String campus = 'BCI',
+  String area = 'Somewhere',
   bool isMine = false,
 }) =>
     ReportItem(
       id: id,
       title: title,
-      location: location,
+      campus: campus,
+      area: area,
       type: type,
       isMine: isMine,
       createdAt: DateTime.now(),
@@ -179,47 +188,47 @@ void main() {
 
     test('an empty password never reaches the network', () async {
       final auth = FakeAuthService();
-      final vm = AuthViewModel(auth)
+      final controller = AuthController(auth)
         ..emailController.text = FakeAuthService.validEmail
         ..passwordController.text = '';
 
       // Validation happens before the call, so the service is never asked.
-      expect(await vm.submitAuth(_DummyContext()), isNull);
+      expect(await controller.submitAuth(_DummyContext()), isNull);
       expect(auth.signInCalls, 0);
-      expect(vm.errorMessage, 'Please enter your password.');
+      expect(controller.errorMessage, 'Please enter your password.');
     });
 
     test('a malformed email is caught locally', () async {
       final auth = FakeAuthService();
-      final vm = AuthViewModel(auth)
+      final controller = AuthController(auth)
         ..emailController.text = 'not-an-email'
         ..passwordController.text = 'password123';
 
-      expect(await vm.submitAuth(_DummyContext()), isNull);
+      expect(await controller.submitAuth(_DummyContext()), isNull);
       expect(auth.signInCalls, 0);
-      expect(vm.errorMessage, contains('valid email'));
+      expect(controller.errorMessage, contains('valid email'));
     });
 
     test('a rejected sign-in surfaces the server message', () async {
       final auth = FakeAuthService();
-      final vm = AuthViewModel(auth)
+      final controller = AuthController(auth)
         ..emailController.text = FakeAuthService.validEmail
         ..passwordController.text = 'wrong-password';
 
-      expect(await vm.submitAuth(_DummyContext()), isNull);
+      expect(await controller.submitAuth(_DummyContext()), isNull);
       expect(auth.signInCalls, 1);
-      expect(vm.errorMessage, 'Invalid email or password');
+      expect(controller.errorMessage, 'Invalid email or password');
     });
 
     test('sign-up enforces the 8 character minimum the server requires', () async {
       final auth = FakeAuthService();
-      final vm = AuthViewModel(auth)
+      final controller = AuthController(auth)
         ..setAuthMode(false)
         ..emailController.text = 'new@example.com'
         ..passwordController.text = 'short';
 
-      expect(await vm.submitAuth(_DummyContext()), isNull);
-      expect(vm.errorMessage, contains('at least 8 characters'));
+      expect(await controller.submitAuth(_DummyContext()), isNull);
+      expect(controller.errorMessage, contains('at least 8 characters'));
     });
   });
 
@@ -227,10 +236,14 @@ void main() {
     test('builds from an API payload', () {
       final item = ReportItem.fromJson({
         'id': 'LST-1',
-        'title': 'Black Leather Wallet',
+        'title': 'Leather Wallet',
         'type': 'lost',
         'status': 'open',
-        'location': 'Colombo',
+        'location': 'BCI · CRK 2',
+        'campus': 'BCI',
+        'area': 'CRK 2',
+        'itemColor': 'Black',
+        'additionalDetails': 'Near the computers on the second floor',
         'category': 'wallets',
         'emoji': '👛',
         'iconBgHex': 'FFF0F5',
@@ -251,6 +264,13 @@ void main() {
       expect(item.isMine, isTrue);
       expect(item.lat, 6.9);
       expect(item.viewCount, 3);
+
+      // The campus/area split main added, round-tripped through the API.
+      expect(item.campus, 'BCI');
+      expect(item.area, 'CRK 2');
+      expect(item.location, 'BCI · CRK 2');
+      expect(item.displayTitle, 'Black Leather Wallet');
+      expect(item.locationFull, contains('second floor'));
     });
 
     test('survives a payload with missing optional fields', () {
@@ -260,6 +280,36 @@ void main() {
       expect(item.emojiIcon, '📦');
       expect(item.reward, isNull);
       expect(item.images, isEmpty);
+      expect(item.campus, isEmpty);
+      expect(item.itemColor, isNull);
+      // No colour means the title is shown as-is, not with a stray leading space.
+      expect(item.displayTitle, '');
+    });
+
+    test('falls back to the server location when there is no campus or area', () {
+      // Reports the admin dashboard filed only ever have the single location string.
+      final item = ReportItem.fromJson({
+        'id': 'ADM-1',
+        'type': 'lost',
+        'location': 'Viharamahadevi Park, Colombo',
+      });
+      expect(item.location, 'Viharamahadevi Park, Colombo');
+
+      final blank = ReportItem.fromJson({'id': 'ADM-2', 'type': 'lost'});
+      expect(blank.location, 'Unknown Location');
+    });
+
+    test('composes the location the API stores from campus and area', () {
+      expect(ReportItem.composeLocation('BCI', 'CRK 2'), 'BCI · CRK 2');
+      expect(ReportItem.composeLocation('BCI', ''), 'BCI');
+      expect(ReportItem.composeLocation('', ''), isEmpty);
+    });
+
+    test('maps the server category to a Material icon', () {
+      expect(ReportItem.iconForCategory('wallets'), Icons.account_balance_wallet);
+      expect(ReportItem.iconForCategory('electronics'), Icons.smartphone);
+      // A category added server-side later must not draw nothing.
+      expect(ReportItem.iconForCategory('not-a-real-category'), Icons.inventory_2);
     });
 
     test('formats a reward, and omits it when there is none', () {
@@ -276,7 +326,8 @@ void main() {
       String ago(Duration d) => ReportItem(
             id: 'X',
             title: 't',
-            location: 'l',
+            campus: 'BCI',
+            area: 'CRK 1',
             type: ReportType.lost,
             createdAt: now.subtract(d),
           ).timeAgo;
@@ -289,8 +340,14 @@ void main() {
     });
 
     test('only badges states worth calling out', () {
-      ReportItem withStatus(String? s) =>
-          ReportItem(id: 'X', title: 't', location: 'l', type: ReportType.lost, status: s);
+      ReportItem withStatus(String? s) => ReportItem(
+            id: 'X',
+            title: 't',
+            campus: 'BCI',
+            area: 'CRK 1',
+            type: ReportType.lost,
+            status: s,
+          );
 
       expect(withStatus('matched').statusLabel, 'MATCHED');
       expect(withStatus('returned').statusLabel, 'RETURNED');
@@ -298,13 +355,15 @@ void main() {
     });
   });
 
-  group('Repository and view-model (ISP, DIP, LSP)', () {
+  group('Repository and controller (ISP, DIP, LSP)', () {
     test('reads, writes and separates the caller\'s own reports', () async {
       final repository = FakeReportRepository();
       expect(repository.getAllReports(), isEmpty);
 
-      await repository.addReport(title: 'Lost Wallet', type: ReportType.lost, location: 'Downtown');
-      await repository.addReport(title: 'Found Keys', type: ReportType.found, location: 'Park');
+      await repository.addReport(
+          title: 'Lost Wallet', type: ReportType.lost, campus: 'BCI', area: 'Downtown');
+      await repository.addReport(
+          title: 'Found Keys', type: ReportType.found, campus: 'BCI', area: 'Park');
       repository.value = [
         ...repository.value,
         _item(id: 'other', title: 'Someone else\'s', type: ReportType.lost),
@@ -320,41 +379,64 @@ void main() {
       expect(repository.getAllReports().length, 2);
     });
 
-    test('the view-model notifies listeners when the repository changes', () async {
+    test('the controller notifies listeners when the repository changes', () async {
       final repository = FakeReportRepository();
-      final vm = DashboardViewModel(repository);
+      final controller = DashboardController(repository);
 
       var notified = 0;
-      vm.addListener(() => notified++);
+      controller.addListener(() => notified++);
 
-      await vm.addReport(title: 'New', type: ReportType.lost, location: 'Here');
+      await controller.addReport(
+          title: 'New', type: ReportType.lost, campus: 'BCI', area: 'Here');
       expect(notified, greaterThan(0));
-      expect(vm.allReports.length, 1);
+      expect(controller.allReports.length, 1);
+    });
+
+    test('the controller passes the location parts through to the repository', () async {
+      final repository = FakeReportRepository();
+      final controller = DashboardController(repository);
+
+      await controller.addReport(
+        title: 'Sony Headphones',
+        type: ReportType.found,
+        campus: 'BCI',
+        area: 'Library',
+        itemColor: 'Black',
+        additionalDetails: 'Left on a table near the window',
+        category: 'electronics',
+      );
+
+      final created = controller.allReports.single;
+      expect(created.campus, 'BCI');
+      expect(created.area, 'Library');
+      expect(created.location, 'BCI · Library');
+      expect(created.displayTitle, 'Black Sony Headphones');
+      expect(created.icon, Icons.smartphone);
     });
 
     test('filters and search compose', () {
       final repository = FakeReportRepository([
-        _item(id: '1', title: 'Lost Wallet', type: ReportType.lost, location: 'Downtown'),
-        _item(id: '2', title: 'Found Phone', type: ReportType.found, location: 'Airport'),
-        _item(id: '3', title: 'Lost Keys', type: ReportType.lost, location: 'Airport'),
+        _item(id: '1', title: 'Lost Wallet', type: ReportType.lost, area: 'Downtown'),
+        _item(id: '2', title: 'Found Phone', type: ReportType.found, area: 'Airport'),
+        _item(id: '3', title: 'Lost Keys', type: ReportType.lost, area: 'Airport'),
       ]);
-      final vm = DashboardViewModel(repository);
+      final controller = DashboardController(repository);
 
-      expect(vm.filteredReports.length, 3);
+      expect(controller.filteredReports.length, 3);
 
-      vm.setFilter(ReportType.lost);
-      expect(vm.filteredReports.length, 2);
+      controller.setFilter(ReportType.lost);
+      expect(controller.filteredReports.length, 2);
 
-      vm.setSearchQuery('airport');
-      expect(vm.filteredReports.length, 1);
-      expect(vm.filteredReports.first.id, '3');
+      controller.setSearchQuery('airport');
+      expect(controller.filteredReports.length, 1);
+      expect(controller.filteredReports.first.id, '3');
     });
   });
 
   group('Filter strategies (OCP)', () {
     final items = [
-      _item(id: '1', title: 'Lost Wallet', type: ReportType.lost, location: 'Downtown'),
-      _item(id: '2', title: 'Found Phone', type: ReportType.found, location: 'Airport'),
+      _item(id: '1', title: 'Lost Wallet', type: ReportType.lost, area: 'Downtown'),
+      _item(id: '2', title: 'Found Phone', type: ReportType.found, area: 'Airport'),
     ];
 
     test('each strategy returns only its own type', () {
@@ -363,10 +445,26 @@ void main() {
       expect(FoundReportsFilterStrategy().filter(items, '').single.id, '2');
     });
 
-    test('search matches title and location, case-insensitively', () {
+    test('search matches title and area, case-insensitively', () {
       expect(AllReportsFilterStrategy().filter(items, 'WALLET').single.id, '1');
       expect(AllReportsFilterStrategy().filter(items, 'airport').single.id, '2');
       expect(AllReportsFilterStrategy().filter(items, 'nothing'), isEmpty);
+    });
+
+    test('search also matches the colour and the details line', () {
+      final coloured = [
+        ReportItem(
+          id: '9',
+          title: 'Backpack',
+          itemColor: 'Blue',
+          campus: 'BCI',
+          area: 'Canteen',
+          additionalDetails: 'Hanging on the third chair',
+          type: ReportType.lost,
+        ),
+      ];
+      expect(AllReportsFilterStrategy().filter(coloured, 'blue').single.id, '9');
+      expect(AllReportsFilterStrategy().filter(coloured, 'third chair').single.id, '9');
     });
   });
 
@@ -379,7 +477,7 @@ void main() {
         MultiProvider(
           providers: [
             ListenableProvider<IReportRepository>.value(value: repository),
-            ChangeNotifierProvider(create: (_) => DashboardViewModel(repository)),
+            ChangeNotifierProvider(create: (_) => DashboardController(repository)),
           ],
           child: const MaterialApp(home: ReportListScreen(reportType: ReportType.lost)),
         ),
@@ -422,7 +520,7 @@ void main() {
   });
 }
 
-/// AuthViewModel.submitAuth only touches the BuildContext after a *successful* call, so the
+/// AuthController.submitAuth only touches the BuildContext after a *successful* call, so the
 /// validation and failure paths can be exercised with a context that is never used.
 class _DummyContext extends BuildContext {
   @override

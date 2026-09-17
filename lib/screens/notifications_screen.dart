@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/app_notification.dart';
-import '../viewmodels/notifications_viewmodel.dart';
+import '../controllers/notifications_controller.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -16,13 +16,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<NotificationsViewModel>().load();
+      context.read<NotificationsController>().load();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<NotificationsViewModel>();
+    final vm = context.watch<NotificationsController>();
     final notifications = vm.items;
     final hasUnread = vm.unreadCount > 0;
 
@@ -38,7 +38,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         centerTitle: true,
         actions: [
           TextButton(
-            onPressed: hasUnread ? () => context.read<NotificationsViewModel>().markAllRead() : null,
+            onPressed: hasUnread ? () => context.read<NotificationsController>().markAllRead() : null,
             child: Text(
               'Mark all read',
               style: TextStyle(
@@ -109,7 +109,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final visual = _visualFor(n.type);
 
     return GestureDetector(
-      onTap: () => context.read<NotificationsViewModel>().markRead(n),
+      onTap: () => context.read<NotificationsController>().markRead(n),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -200,17 +200,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   ({IconData icon, Color color}) _visualFor(NotificationType type) {
     switch (type) {
       case NotificationType.match:
-        return (icon: Icons.favorite_rounded, color: AppColors.foundGreenEnd);
+        return (icon: Icons.favorite_rounded, color: AppColors.foundThemeEnd);
       case NotificationType.comment:
         return (icon: Icons.chat_bubble_rounded, color: AppColors.primaryBlue);
       case NotificationType.claim:
         return (icon: Icons.handshake_rounded, color: AppColors.primaryCyan);
       case NotificationType.returned:
-        return (icon: Icons.task_alt_rounded, color: AppColors.foundGreenEnd);
+        return (icon: Icons.task_alt_rounded, color: AppColors.foundThemeEnd);
       case NotificationType.info:
         return (icon: Icons.trending_up_rounded, color: AppColors.primaryBlue);
       case NotificationType.reminder:
-        return (icon: Icons.notifications_active_rounded, color: AppColors.lostRedEnd);
+        return (icon: Icons.notifications_active_rounded, color: AppColors.errorRed);
     }
   }
 }

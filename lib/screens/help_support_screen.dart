@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
-import '../viewmodels/support_viewmodel.dart';
+import '../controllers/support_controller.dart';
 
 /// Help & Support screen.
 ///
@@ -19,13 +19,13 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SupportViewModel>().load();
+      context.read<SupportController>().load();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final support = context.watch<SupportViewModel>();
+    final support = context.watch<SupportController>();
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
@@ -55,7 +55,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
               title: 'Hotline',
               subtitle: support.config('hotline', fallback: '—'),
               trailing: support.config('hotlineHours', fallback: ''),
-              trailingColor: AppColors.foundGreenEnd,
+              trailingColor: AppColors.foundThemeEnd,
             ),
             _buildContactCard(
               icon: Icons.email_outlined,
@@ -82,7 +82,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                 ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                    color: AppColors.lostRedEnd.withAlpha(40), width: 1),
+                    color: AppColors.errorRed.withAlpha(40), width: 1),
               ),
               child: Row(
                 children: [
@@ -90,11 +90,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: AppColors.lostRedEnd.withAlpha(25),
+                      color: AppColors.errorRed.withAlpha(25),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(Icons.emergency_outlined,
-                        color: AppColors.lostRedEnd, size: 22),
+                        color: AppColors.errorRed, size: 22),
                   ),
                   const SizedBox(width: 14),
                   const Expanded(
@@ -106,7 +106,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.lostRedEnd,
+                            color: AppColors.errorRed,
                           ),
                         ),
                         SizedBox(height: 2),
@@ -120,7 +120,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                       ],
                     ),
                   ),
-                  const Icon(Icons.call, color: AppColors.lostRedEnd, size: 20),
+                  const Icon(Icons.call, color: AppColors.errorRed, size: 20),
                 ],
               ),
             ),
@@ -148,7 +148,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
               title: 'Get Connected',
               description:
                   'When a match is found, both parties are notified to arrange a safe return.',
-              color: AppColors.foundGreenEnd,
+              color: AppColors.foundThemeEnd,
             ),
             const SizedBox(height: 24),
 

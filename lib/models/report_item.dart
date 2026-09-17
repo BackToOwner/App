@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 enum ReportType { all, lost, found }
 
 ReportType reportTypeFromString(String? value) =>
@@ -6,7 +8,20 @@ ReportType reportTypeFromString(String? value) =>
 class ReportItem {
   final String id;
   final String title;
-  final String location;
+
+  /// Colour prefix shown in front of the title, e.g. "Black Sony Wireless Headphones".
+  final String? itemColor;
+
+  /// The two halves of a location the report form collects separately. Both are empty on reports
+  /// the admin dashboard filed — those only ever have the server's single location string, which
+  /// is what [location] falls back to rather than rendering an empty campus.
+  final String campus;
+  final String area;
+  final String? additionalDetails;
+
+  /// The server's single free-text location. Read it through [location], never directly.
+  final String _serverLocation;
+
   final ReportType type;
 
   /// Server-side lifecycle: open | in_review | matched | returned | closed.
@@ -15,7 +30,7 @@ class ReportItem {
   final String category;
 
   /// Emoji and card background come from the `categories` table, so the app no longer keeps its
-  /// own copy of what each category looks like.
+  /// own copy of what each category looks like. [icon] maps the same category to a Material icon.
   final String emojiIcon;
   final String iconBgHex;
 
@@ -41,8 +56,12 @@ class ReportItem {
   ReportItem({
     required this.id,
     required this.title,
-    required this.location,
     required this.type,
+    String location = '',
+    this.itemColor,
+    this.campus = '',
+    this.area = '',
+    this.additionalDetails,
     this.status,
     this.description = '',
     this.category = 'other',
@@ -63,7 +82,7 @@ class ReportItem {
     this.claimCount = 0,
     this.createdAt,
     this.matched = false,
-  });
+  }) : _serverLocation = location;
 
   factory ReportItem.fromJson(Map<String, dynamic> json) {
     final owner = json['owner'] as Map<String, dynamic>?;
@@ -72,7 +91,11 @@ class ReportItem {
     return ReportItem(
       id: json['id'] as String,
       title: json['title'] as String? ?? '',
-      location: json['location'] as String? ?? 'Unknown Location',
+      location: json['location'] as String? ?? '',
+      itemColor: json['itemColor'] as String?,
+      campus: json['campus'] as String? ?? '',
+      area: json['area'] as String? ?? '',
+      additionalDetails: json['additionalDetails'] as String?,
       type: reportTypeFromString(json['type'] as String?),
       status: json['status'] as String?,
       description: json['description'] as String? ?? '',
@@ -95,6 +118,55 @@ class ReportItem {
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '')?.toLocal(),
       matched: json['matched'] as bool? ?? false,
     );
+  }
+
+  /// The single location line the API stores. The server requires one, so the campus and area are
+  /// composed into it on the way out — that keeps search and the FTS index working unchanged.
+  static String composeLocation(String campus, String area) => [campus, area]
+      .map((part) => part.trim())
+      .where((part) => part.isNotEmpty)
+      .join(' · ');
+
+  /// Material icons keyed by the server's category id, in the order the report form offers them.
+  /// The category list is fixed server-side, so an unknown id only means a new category was added
+  /// — which falls back to the generic box rather than drawing nothing.
+  static const Map<String, IconData> categoryIcons = {
+    'electronics': Icons.smartphone,
+    'wallets': Icons.account_balance_wallet,
+    'pets': Icons.pets,
+    'keys': Icons.vpn_key,
+    'bags': Icons.backpack,
+    'documents': Icons.description,
+    'jewelry': Icons.watch,
+    'clothing': Icons.checkroom,
+    'other': Icons.inventory_2,
+  };
+
+  static IconData iconForCategory(String category) =>
+      categoryIcons[category] ?? Icons.inventory_2;
+
+  IconData get icon => iconForCategory(category);
+
+  /// Title with the colour prefix, e.g. "Black Sony Wireless Headphones".
+  String get displayTitle {
+    final colour = itemColor;
+    if (colour != null && colour.isNotEmpty) return '$colour $title';
+    return title;
+  }
+
+  /// Combined location for display, e.g. "BCI · CRK 2". Falls back to whatever single string the
+  /// server holds when this report predates the campus/area split.
+  String get location {
+    final composed = composeLocation(campus, area);
+    if (composed.isNotEmpty) return composed;
+    return _serverLocation.isEmpty ? 'Unknown Location' : _serverLocation;
+  }
+
+  /// Full location including the free-text details line.
+  String get locationFull {
+    final details = additionalDetails;
+    if (details != null && details.isNotEmpty) return '$location\n$details';
+    return location;
   }
 
   /// Formatted for the card, e.g. "LKR 5,000 reward". Null when no reward was offered, which is

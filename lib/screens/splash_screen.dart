@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../services/auth/auth_service_interface.dart';
-import '../viewmodels/dashboard_viewmodel.dart';
-import '../viewmodels/profile_viewmodel.dart';
+import '../controllers/dashboard_controller.dart';
+import '../controllers/profile_controller.dart';
 
 /// Decides where the app opens.
 ///
@@ -38,9 +38,9 @@ class _SplashScreenState extends State<SplashScreen> {
         return;
       }
 
-      context.read<ProfileViewModel>().setUser(user);
+      context.read<ProfileController>().setUser(user);
       // Warm the feed so the dashboard has content on its first frame.
-      await context.read<DashboardViewModel>().refresh();
+      await context.read<DashboardController>().refresh();
 
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed('/dashboard');

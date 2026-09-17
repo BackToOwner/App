@@ -8,7 +8,10 @@ abstract class ReportFilterStrategy {
     if (query.isEmpty) return true;
     final q = query.toLowerCase();
     return item.title.toLowerCase().contains(q) ||
-        item.location.toLowerCase().contains(q);
+        (item.itemColor?.toLowerCase().contains(q) ?? false) ||
+        item.campus.toLowerCase().contains(q) ||
+        item.area.toLowerCase().contains(q) ||
+        (item.additionalDetails?.toLowerCase().contains(q) ?? false);
   }
 }
 

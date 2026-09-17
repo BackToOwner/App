@@ -5,10 +5,10 @@ import '../services/api/api_exception.dart';
 
 /// Serves the Help & Support screen from the backend, so hotline numbers, social links and FAQ
 /// copy can change without shipping a new build.
-class SupportViewModel extends ChangeNotifier {
+class SupportController extends ChangeNotifier {
   final ApiClient _api;
 
-  SupportViewModel(this._api);
+  SupportController(this._api);
 
   List<Faq> _faqs = const [];
   Map<String, String> _config = const {};

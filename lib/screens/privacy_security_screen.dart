@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../services/api/api_exception.dart';
-import '../viewmodels/profile_viewmodel.dart';
+import '../controllers/profile_controller.dart';
 
 /// Privacy & Security screen with password change fields.
 class PrivacySecurityScreen extends StatefulWidget {
@@ -38,36 +38,36 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
     final confirm = _confirmPasswordController.text.trim();
 
     if (current.isEmpty || newPass.isEmpty || confirm.isEmpty) {
-      _showSnackBar('Please fill in all fields.', AppColors.lostRedEnd);
+      _showSnackBar('Please fill in all fields.', AppColors.errorRed);
       return;
     }
 
     if (newPass.length < 8) {
       _showSnackBar(
-          'New password must be at least 8 characters.', AppColors.lostRedEnd);
+          'New password must be at least 8 characters.', AppColors.errorRed);
       return;
     }
 
     if (newPass != confirm) {
-      _showSnackBar('New passwords do not match.', AppColors.lostRedEnd);
+      _showSnackBar('New passwords do not match.', AppColors.errorRed);
       return;
     }
 
     // Simulate password change
     setState(() => _isSaving = true);
     try {
-      await context.read<ProfileViewModel>().changePassword(
+      await context.read<ProfileController>().changePassword(
             currentPassword: current,
             newPassword: newPass,
           );
       if (!mounted) return;
-      _showSnackBar('Password changed successfully!', AppColors.foundGreenEnd);
+      _showSnackBar('Password changed successfully!', AppColors.foundThemeEnd);
       _currentPasswordController.clear();
       _newPasswordController.clear();
       _confirmPasswordController.clear();
     } on ApiException catch (e) {
       if (!mounted) return;
-      _showSnackBar(e.message, AppColors.lostRedEnd);
+      _showSnackBar(e.message, AppColors.errorRed);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

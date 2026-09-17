@@ -6,11 +6,11 @@ import '../services/auth/api_auth_service.dart';
 import '../services/auth/auth_service_interface.dart';
 
 /// Holds the signed-in user for every screen that used to show hard-coded details.
-class ProfileViewModel extends ChangeNotifier {
+class ProfileController extends ChangeNotifier {
   final ApiClient _api;
   final IAuthService _authService;
 
-  ProfileViewModel(this._api, this._authService) {
+  ProfileController(this._api, this._authService) {
     _user = _authService.currentUser;
   }
 

@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/report_item.dart';
 import '../services/api/api_exception.dart';
-import '../viewmodels/dashboard_viewmodel.dart';
+import '../controllers/dashboard_controller.dart';
 import 'custom_text_field.dart';
 import 'gradient_button.dart';
 
@@ -33,7 +33,10 @@ class ReportItemModal extends StatefulWidget {
 class _ReportItemModalState extends State<ReportItemModal> {
   late ReportType _selectedType;
   final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _colorController = TextEditingController();
+  final TextEditingController _campusController = TextEditingController();
+  final TextEditingController _areaController = TextEditingController();
+  final TextEditingController _additionalDetailsController = TextEditingController();
   final TextEditingController _rewardController = TextEditingController();
   final TextEditingController _imageController = TextEditingController();
 
@@ -41,20 +44,25 @@ class _ReportItemModalState extends State<ReportItemModal> {
   File? _pickedImage;
   String? _imageFileName;
 
-  final List<String> _emojis = ['👛', '📱', '🐕', '🔑', '🎒', '🎧', '💻', '🕶️', '⌚', '💼'];
-  late String _selectedEmoji;
+  /// The picker doubles as the category chooser: the server derives the card's emoji and swatch
+  /// from the category, so sending the id behind the chosen icon is what makes the choice stick.
+  final List<String> _categories = ReportItem.categoryIcons.keys.toList();
+  late String _selectedCategory;
 
   @override
   void initState() {
     super.initState();
     _selectedType = widget.initialType;
-    _selectedEmoji = _emojis[0];
+    _selectedCategory = _categories.first;
   }
 
   @override
   void dispose() {
     _titleController.dispose();
-    _locationController.dispose();
+    _colorController.dispose();
+    _campusController.dispose();
+    _areaController.dispose();
+    _additionalDetailsController.dispose();
     _rewardController.dispose();
     _imageController.dispose();
     super.dispose();
@@ -187,7 +195,7 @@ class _ReportItemModalState extends State<ReportItemModal> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to pick image: $e'),
-            backgroundColor: AppColors.lostRedEnd,
+            backgroundColor: AppColors.errorRed,
           ),
         );
       }
@@ -200,7 +208,10 @@ class _ReportItemModalState extends State<ReportItemModal> {
     if (_isSubmitting) return;
 
     final title = _titleController.text.trim();
-    final location = _locationController.text.trim();
+    final itemColor = _colorController.text.trim();
+    final campus = _campusController.text.trim();
+    final area = _areaController.text.trim();
+    final additionalDetails = _additionalDetailsController.text.trim();
     final rewardText = _rewardController.text.trim();
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
@@ -212,9 +223,16 @@ class _ReportItemModalState extends State<ReportItemModal> {
       return;
     }
 
-    if (location.length < 2) {
+    if (campus.isEmpty) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Please enter the location.')),
+        const SnackBar(content: Text('Please enter the campus.')),
+      );
+      return;
+    }
+
+    if (area.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Please enter the area.')),
       );
       return;
     }
@@ -225,10 +243,14 @@ class _ReportItemModalState extends State<ReportItemModal> {
 
     setState(() => _isSubmitting = true);
     try {
-      await context.read<DashboardViewModel>().addReport(
+      await context.read<DashboardController>().addReport(
             title: title,
             type: _selectedType,
-            location: location,
+            campus: campus,
+            area: area,
+            itemColor: itemColor.isNotEmpty ? itemColor : null,
+            additionalDetails: additionalDetails.isNotEmpty ? additionalDetails : null,
+            category: _selectedCategory,
             reward: reward,
             imagePath: _pickedImage?.path,
           );
@@ -237,12 +259,12 @@ class _ReportItemModalState extends State<ReportItemModal> {
       messenger.showSnackBar(
         SnackBar(
           content: Text('Successfully reported: "$title"'),
-          backgroundColor: AppColors.foundGreenStart,
+          backgroundColor: AppColors.foundThemeStart,
         ),
       );
     } on ApiException catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: AppColors.lostRedEnd),
+        SnackBar(content: Text(e.message), backgroundColor: AppColors.errorRed),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -283,7 +305,7 @@ class _ReportItemModalState extends State<ReportItemModal> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  isLost ? 'Report Lost Item 🥹' : 'Report Found Item 🎉',
+                  isLost ? 'Report Lost Item' : 'Report Found Item',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -307,12 +329,54 @@ class _ReportItemModalState extends State<ReportItemModal> {
             ),
             const SizedBox(height: 14),
 
-            // Form Field: Location
+            // Form Field: Item Color (Optional)
             CustomTextField(
-              label: 'Location *',
-              hintText: 'e.g. Central Park, NY or Terminal 2',
-              prefixIcon: Icons.location_on_outlined,
-              controller: _locationController,
+              label: 'Item Color',
+              hintText: 'e.g. Black, Silver, Red',
+              prefixIcon: Icons.palette_outlined,
+              controller: _colorController,
+            ),
+            const SizedBox(height: 14),
+
+            // Form Field: Location — Campus & Area
+            const Text(
+              'Location *',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: CustomTextField(
+                    label: 'Campus',
+                    hintText: 'e.g. BCI',
+                    prefixIcon: Icons.school_outlined,
+                    controller: _campusController,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: CustomTextField(
+                    label: 'Area',
+                    hintText: 'e.g. CRK 2',
+                    prefixIcon: Icons.place_outlined,
+                    controller: _areaController,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // Form Field: Additional Details (Optional)
+            CustomTextField(
+              label: 'Additional Details (Optional)',
+              hintText: 'e.g. Near the computers on the second floor',
+              prefixIcon: Icons.info_outline,
+              controller: _additionalDetailsController,
             ),
             const SizedBox(height: 14),
 
@@ -410,7 +474,7 @@ class _ReportItemModalState extends State<ReportItemModal> {
               const SizedBox(height: 14),
             ],
 
-            // Category Emoji Selector
+            // Category Icon Selector
             const Text(
               'Select Item Icon',
               style: TextStyle(
@@ -424,12 +488,14 @@ class _ReportItemModalState extends State<ReportItemModal> {
               height: 52,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: _emojis.length,
+                itemCount: _categories.length,
                 itemBuilder: (context, index) {
-                  final emoji = _emojis[index];
-                  final isSelected = _selectedEmoji == emoji;
+                  final category = _categories[index];
+                  final isSelected = _selectedCategory == category;
+                  final themeColor =
+                      isLost ? AppColors.lostThemeStart : AppColors.foundThemeStart;
                   return GestureDetector(
-                    onTap: () => setState(() => _selectedEmoji = emoji),
+                    onTap: () => setState(() => _selectedCategory = category),
                     child: Container(
                       margin: const EdgeInsets.only(right: 10),
                       padding: const EdgeInsets.all(10),
@@ -439,13 +505,15 @@ class _ReportItemModalState extends State<ReportItemModal> {
                             : AppColors.fieldBackground,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: isSelected
-                              ? (isLost ? AppColors.lostRedEnd : AppColors.foundGreenEnd)
-                              : AppColors.borderColor,
+                          color: isSelected ? themeColor : AppColors.borderColor,
                           width: isSelected ? 2 : 1,
                         ),
                       ),
-                      child: Text(emoji, style: const TextStyle(fontSize: 22)),
+                      child: Icon(
+                        ReportItem.iconForCategory(category),
+                        size: 22,
+                        color: isSelected ? themeColor : AppColors.textPrimary,
+                      ),
                     ),
                   );
                 },

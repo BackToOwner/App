@@ -4,10 +4,10 @@ import '../services/api/api_client.dart';
 import '../services/api/api_exception.dart';
 
 /// Backs the notifications screen, which previously rendered a hard-coded list.
-class NotificationsViewModel extends ChangeNotifier {
+class NotificationsController extends ChangeNotifier {
   final ApiClient _api;
 
-  NotificationsViewModel(this._api);
+  NotificationsController(this._api);
 
   List<AppNotification> _items = const [];
   bool _isLoading = false;

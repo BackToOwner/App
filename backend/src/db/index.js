@@ -59,6 +59,14 @@ const ADDED_COLUMNS = {
     ['owner_user_id', 'TEXT REFERENCES users(id) ON DELETE SET NULL'],
     ['source', "TEXT NOT NULL DEFAULT 'admin'"],
     ['emoji', 'TEXT'],
+    // The report form collects a location as campus + area rather than one free-text line.
+    // `location` stays the single searchable string (the FTS index is built on it); these hold
+    // the parts so the app can show and edit them separately. Nullable, because reports the admin
+    // dashboard creates — and everything filed before this — only ever have `location`.
+    ['campus', 'TEXT'],
+    ['area', 'TEXT'],
+    ['item_color', 'TEXT'],
+    ['additional_details', 'TEXT'],
     ['reward_currency', "TEXT NOT NULL DEFAULT 'LKR'"],
     ['contact_visibility', "TEXT NOT NULL DEFAULT 'on_claim_accepted'"],
     ['view_count', 'INTEGER NOT NULL DEFAULT 0'],

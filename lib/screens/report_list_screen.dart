@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/report_item.dart';
-import '../viewmodels/dashboard_viewmodel.dart';
+import '../controllers/dashboard_controller.dart';
 import '../widgets/empty_state_widget.dart';
 import '../widgets/item_detail_modal.dart';
 import '../widgets/report_item_card.dart';
@@ -15,14 +15,14 @@ class ReportListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = context.watch<DashboardViewModel>();
+    final controller = context.watch<DashboardController>();
     final isLost = reportType == ReportType.lost;
-    final items = isLost ? viewModel.lostReports : viewModel.foundReports;
+    final items = isLost ? controller.lostReports : controller.foundReports;
 
     final primaryColor = isLost
-        ? AppColors.lostRedEnd
-        : AppColors.foundGreenEnd;
-    final title = isLost ? 'Lost Items 🥹' : 'Found Items 🎉';
+        ? AppColors.lostThemeStart
+        : AppColors.foundThemeStart;
+    final title = isLost ? 'Lost Items' : 'Found Items';
     final fabLabel = isLost ? 'Report Lost' : 'Report Found';
 
     return Scaffold(
@@ -31,7 +31,7 @@ class ReportListScreen extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            context.read<DashboardViewModel>().setNavIndex(0);
+            context.read<DashboardController>().setNavIndex(0);
           },
         ),
         title: Text(
@@ -47,7 +47,7 @@ class ReportListScreen extends StatelessWidget {
       ),
       body: items.isEmpty
           ? EmptyStateWidget(
-              emoji: isLost ? '🥹' : '🎉',
+              iconData: isLost ? Icons.search_off_rounded : Icons.task_alt_rounded,
               title: isLost
                   ? 'No Lost Items Reported Yet'
                   : 'No Found Items Reported Yet',
@@ -75,8 +75,8 @@ class ReportListScreen extends StatelessWidget {
             ),
       floatingActionButton: items.isNotEmpty
           ? FloatingActionButton.extended(
-              onPressed: () =>
-                  ReportItemModal.show(context, initialType: reportType),
+              heroTag: isLost ? 'lost_fab' : 'found_fab',
+              onPressed: () => ReportItemModal.show(context, initialType: isLost ? ReportType.lost : ReportType.found),
               backgroundColor: primaryColor,
               icon: const Icon(Icons.add, color: Colors.white),
               label: Text(

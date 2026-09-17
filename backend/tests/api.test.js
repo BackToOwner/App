@@ -644,6 +644,44 @@ try {
   const badCategory = await post('/reports', { title: 'Odd category item', type: 'lost', location: 'Test Location', category: 'not-a-real-category' }, { token: aliceToken });
   check('an unknown category falls back to "other"', badCategory.body?.data?.category === 'other', badCategory.body?.data?.category);
 
+  // ── Location parts ──────────────────────────────────────────────────────
+  // The report form collects a location as campus + area rather than one free-text line. Both the
+  // parts and the composed `location` the feed searches on have to survive the round trip.
+  section('Location parts');
+
+  const withParts = await post(
+    '/reports',
+    {
+      title: 'Leather Wallet',
+      type: 'lost',
+      location: 'BCI · CRK 2',
+      campus: 'BCI',
+      area: 'CRK 2',
+      itemColor: 'Black',
+      additionalDetails: 'Near the computers on the second floor',
+    },
+    { token: aliceToken }
+  );
+  check('a report accepts campus and area', withParts.status === 201, `got ${withParts.status} ${JSON.stringify(withParts.body)}`);
+  check(
+    'campus and area come back on the report',
+    withParts.body?.data?.campus === 'BCI' && withParts.body?.data?.area === 'CRK 2',
+    JSON.stringify(withParts.body?.data)
+  );
+  check(
+    'the colour and details come back too',
+    withParts.body?.data?.itemColor === 'Black' &&
+      String(withParts.body?.data?.additionalDetails).includes('second floor')
+  );
+  const reread = await get(`/reports/${withParts.body.data.id}`);
+  check('the parts survive a re-read', reread.body?.data?.campus === 'BCI' && reread.body?.data?.area === 'CRK 2');
+  check('the composed location is still searchable', reread.body?.data?.location === 'BCI · CRK 2', reread.body?.data?.location);
+
+  // A report filed without the parts — the admin dashboard does this — keeps working.
+  const noParts = await post('/reports', { title: 'Legacy Shaped Item', type: 'found', location: 'Fort Station' }, { token: aliceToken });
+  check('a report without campus or area is still accepted', noParts.status === 201, `got ${noParts.status}`);
+  check('its parts are null rather than empty strings', noParts.body?.data?.campus === null && noParts.body?.data?.area === null);
+
   // ── Soft delete ─────────────────────────────────────────────────────────
   section('Report deletion');
 

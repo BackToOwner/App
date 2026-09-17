@@ -77,7 +77,10 @@ class ApiReportRepository extends ValueNotifier<List<ReportItem>> implements IRe
   Future<ReportItem> addReport({
     required String title,
     required ReportType type,
-    required String location,
+    required String campus,
+    required String area,
+    String? itemColor,
+    String? additionalDetails,
     String? description,
     String? category,
     double? reward,
@@ -85,10 +88,17 @@ class ApiReportRepository extends ValueNotifier<List<ReportItem>> implements IRe
     double? lng,
     String? imagePath,
   }) async {
+    // `location` stays the single searchable string the feed and FTS index are built on; the
+    // parts are sent alongside it so the detail sheet can show them separately.
     final created = await _api.post<Map<String, dynamic>>('/reports', data: {
       'title': title,
       'type': type == ReportType.found ? 'found' : 'lost',
-      'location': location,
+      'location': ReportItem.composeLocation(campus, area),
+      'campus': campus,
+      'area': area,
+      if (itemColor != null && itemColor.isNotEmpty) 'itemColor': itemColor,
+      if (additionalDetails != null && additionalDetails.isNotEmpty)
+        'additionalDetails': additionalDetails,
       if (description != null && description.isNotEmpty) 'description': description,
       if (category != null && category.isNotEmpty) 'category': category,
       'reward': ?reward,

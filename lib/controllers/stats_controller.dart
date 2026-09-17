@@ -3,10 +3,10 @@ import '../services/api/api_client.dart';
 import '../services/api/api_exception.dart';
 
 /// The three KPI cards on the dashboard. Previously hard-coded as 12,483 / 3,291 / 78%.
-class StatsViewModel extends ChangeNotifier {
+class StatsController extends ChangeNotifier {
   final ApiClient _api;
 
-  StatsViewModel(this._api);
+  StatsController(this._api);
 
   int? _itemsReturned;
   int? _activeCases;

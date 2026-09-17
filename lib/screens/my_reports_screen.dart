@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
-import '../viewmodels/dashboard_viewmodel.dart';
+import '../controllers/dashboard_controller.dart';
 import '../widgets/item_detail_modal.dart';
 import '../widgets/report_item_card.dart';
 
@@ -12,9 +12,9 @@ class MyReportsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = context.watch<DashboardViewModel>();
+    final controller = context.watch<DashboardController>();
     // The caller's own reports, from /me/reports — not the whole public feed.
-    final allReports = viewModel.myReports;
+    final allReports = controller.myReports;
 
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,

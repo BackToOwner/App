@@ -24,10 +24,15 @@ abstract class IReportReader {
 /// Asynchronous, unlike the in-memory version they replaced: each one is a network round trip
 /// that can fail, and the caller needs to await the result before telling the user it worked.
 abstract class IReportWriter {
+  /// [campus] and [area] are the two halves the report form collects; the implementation composes
+  /// them into the single `location` string the API stores.
   Future<ReportItem> addReport({
     required String title,
     required ReportType type,
-    required String location,
+    required String campus,
+    required String area,
+    String? itemColor,
+    String? additionalDetails,
     String? description,
     String? category,
     double? reward,

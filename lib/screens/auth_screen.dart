@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
-import '../viewmodels/auth_viewmodel.dart';
+import '../controllers/auth_controller.dart';
 import '../widgets/custom_segmented_control.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/gradient_button.dart';
@@ -20,7 +20,7 @@ class _AuthScreenContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = context.watch<AuthViewModel>();
+    final controller = context.watch<AuthController>();
     final mediaQuery = MediaQuery.of(context);
     final minHeight = mediaQuery.size.height;
 
@@ -135,30 +135,30 @@ class _AuthScreenContent extends StatelessWidget {
                             SegmentedOption(value: true, label: 'Sign In'),
                             SegmentedOption(value: false, label: 'Sign Up'),
                           ],
-                          selectedValue: viewModel.isSignIn,
-                          onValueChanged: viewModel.setAuthMode,
+                          selectedValue: controller.isSignIn,
+                          onValueChanged: controller.setAuthMode,
                         ),
                         const SizedBox(height: 24),
                         CustomTextField(
                           label: 'Email Address',
                           hintText: 'you@example.com',
                           prefixIcon: Icons.mail_outline,
-                          controller: viewModel.emailController,
+                          controller: controller.emailController,
                         ),
-                        if (!viewModel.isSignIn) ...[
+                        if (!controller.isSignIn) ...[
                           const SizedBox(height: 18),
                           CustomTextField(
                             label: 'Phone Number',
                             hintText: '+94 71 234 5678',
                             prefixIcon: Icons.phone_outlined,
-                            controller: viewModel.phoneController,
+                            controller: controller.phoneController,
                           ),
                           const SizedBox(height: 18),
                           CustomTextField(
                             label: 'ID Verification',
                             hintText: 'Scan or upload your ID card',
                             prefixIcon: Icons.badge_outlined,
-                            controller: viewModel.idVerificationController,
+                            controller: controller.idVerificationController,
                             suffixWidget: IconButton(
                               onPressed: () {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -176,26 +176,26 @@ class _AuthScreenContent extends StatelessWidget {
                           ),
                         ],
                         const SizedBox(height: 18),
-                        if (viewModel.errorMessage != null) ...[
+                        if (controller.errorMessage != null) ...[
                           Container(
                             width: double.infinity,
                             margin: const EdgeInsets.only(bottom: 14),
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                             decoration: BoxDecoration(
-                              color: AppColors.lostRedEnd.withAlpha(24),
+                              color: AppColors.errorRed.withAlpha(24),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.lostRedEnd.withAlpha(90)),
+                              border: Border.all(color: AppColors.errorRed.withAlpha(90)),
                             ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.error_outline, color: AppColors.lostRedEnd, size: 18),
+                                const Icon(Icons.error_outline, color: AppColors.errorRed, size: 18),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
-                                    viewModel.errorMessage!,
+                                    controller.errorMessage!,
                                     style: const TextStyle(
-                                      color: AppColors.lostRedEnd,
+                                      color: AppColors.errorRed,
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.w600,
                                       height: 1.35,
@@ -210,12 +210,12 @@ class _AuthScreenContent extends StatelessWidget {
                           label: 'Password',
                           hintText: 'Min 8 characters',
                           prefixIcon: Icons.lock_outline,
-                          obscureText: viewModel.obscurePassword,
-                          controller: viewModel.passwordController,
+                          obscureText: controller.obscurePassword,
+                          controller: controller.passwordController,
                           suffixWidget: TextButton(
-                            onPressed: viewModel.togglePasswordVisibility,
+                            onPressed: controller.togglePasswordVisibility,
                             child: Text(
-                              viewModel.obscurePassword ? 'Show' : 'Hide',
+                              controller.obscurePassword ? 'Show' : 'Hide',
                               style: const TextStyle(
                                 color: AppColors.primaryBlue,
                                 fontWeight: FontWeight.w700,
@@ -230,7 +230,7 @@ class _AuthScreenContent extends StatelessWidget {
                           child: TextButton(
                             onPressed: () async {
                               final messenger = ScaffoldMessenger.of(context);
-                              final message = await viewModel.requestPasswordReset();
+                              final message = await controller.requestPasswordReset();
                               messenger.showSnackBar(SnackBar(content: Text(message)));
                             },
                             child: const Text(
@@ -245,10 +245,10 @@ class _AuthScreenContent extends StatelessWidget {
                         ),
                         const SizedBox(height: 14),
                         GradientButton(
-                          text: viewModel.isSignIn ? 'Sign In' : 'Sign Up',
-                          onPressed: viewModel.isLoading
+                          text: controller.isSignIn ? 'Sign In' : 'Sign Up',
+                          onPressed: controller.isLoading
                               ? null
-                              : () => viewModel.submitAuth(context),
+                              : () => controller.submitAuth(context),
                         ),
                         const SizedBox(height: 24),
                         Row(
@@ -277,9 +277,9 @@ class _AuthScreenContent extends StatelessWidget {
                         const SizedBox(height: 20),
 
                         OutlinedButton(
-                          onPressed: viewModel.isLoading
+                          onPressed: controller.isLoading
                               ? null
-                              : () => viewModel.submitGoogleAuth(context),
+                              : () => controller.submitGoogleAuth(context),
                           style: OutlinedButton.styleFrom(
                             minimumSize: const Size(double.infinity, 52),
                             backgroundColor: AppColors.fieldBackground,

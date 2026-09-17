@@ -3,14 +3,14 @@ import '../models/report_item.dart';
 import '../services/filter/report_filter_strategy.dart';
 import '../services/repository/report_repository_interface.dart';
 
-class DashboardViewModel extends ChangeNotifier {
+class DashboardController extends ChangeNotifier {
   final IReportRepository _repository;
   ReportFilterStrategy _filterStrategy = AllReportsFilterStrategy();
 
   int _currentNavIndex = 0;
   String _searchQuery = '';
 
-  DashboardViewModel(this._repository) {
+  DashboardController(this._repository) {
     _repository.addListener(_onRepositoryChanged);
   }
 
@@ -40,7 +40,10 @@ class DashboardViewModel extends ChangeNotifier {
   Future<ReportItem> addReport({
     required String title,
     required ReportType type,
-    required String location,
+    required String campus,
+    required String area,
+    String? itemColor,
+    String? additionalDetails,
     String? description,
     String? category,
     double? reward,
@@ -49,7 +52,10 @@ class DashboardViewModel extends ChangeNotifier {
     return _repository.addReport(
       title: title,
       type: type,
-      location: location,
+      campus: campus,
+      area: area,
+      itemColor: itemColor,
+      additionalDetails: additionalDetails,
       description: description,
       category: category,
       reward: reward,

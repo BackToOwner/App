@@ -161,10 +161,12 @@ export const createReport = asyncHandler(async (req, res) => {
   const tx = withTransaction(() => {
     db.prepare(
       `INSERT INTO reports
-         (id, title, type, category, status, location, lat, lng, occurred_at, reward, reward_currency,
+         (id, title, type, category, status, location, campus, area, item_color, additional_details,
+          lat, lng, occurred_at, reward, reward_currency,
           description, images, emoji, owner_user_id,
           reporter_name, reporter_contact, finder_name, finder_contact, created_at, updated_at)
-       VALUES (@id, @title, @type, @category, 'open', @location, @lat, @lng, @occurredAt, @reward, @rewardCurrency,
+       VALUES (@id, @title, @type, @category, 'open', @location, @campus, @area, @itemColor, @additionalDetails,
+               @lat, @lng, @occurredAt, @reward, @rewardCurrency,
                @description, '[]', @emoji, @ownerId,
                @reporterName, @reporterContact, @finderName, @finderContact, @now, @now)`
     ).run({
@@ -173,6 +175,10 @@ export const createReport = asyncHandler(async (req, res) => {
       type: b.type,
       category,
       location: b.location,
+      campus: b.campus ?? null,
+      area: b.area ?? null,
+      itemColor: b.itemColor ?? null,
+      additionalDetails: b.additionalDetails ?? null,
       lat: b.lat ?? null,
       lng: b.lng ?? null,
       occurredAt: b.occurredAt ?? now,
@@ -235,6 +241,10 @@ export const updateReport = asyncHandler(async (req, res) => {
     category: b.category ?? current.category,
     description: b.description ?? current.description,
     location: b.location ?? current.location,
+    campus: b.campus ?? current.campus,
+    area: b.area ?? current.area,
+    itemColor: b.itemColor ?? current.item_color,
+    additionalDetails: b.additionalDetails ?? current.additional_details,
     lat: b.lat === undefined ? current.lat : b.lat,
     lng: b.lng === undefined ? current.lng : b.lng,
     occurredAt: b.occurredAt ?? current.occurred_at,
@@ -249,6 +259,8 @@ export const updateReport = asyncHandler(async (req, res) => {
     db.prepare(
       `UPDATE reports
           SET title = @title, category = @category, description = @description, location = @location,
+              campus = @campus, area = @area, item_color = @itemColor,
+              additional_details = @additionalDetails,
               lat = @lat, lng = @lng, occurred_at = @occurredAt, reward = @reward,
               reward_currency = @rewardCurrency, emoji = @emoji, status = @status, updated_at = @now
         WHERE id = @id`

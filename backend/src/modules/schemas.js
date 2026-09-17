@@ -80,6 +80,12 @@ export const createReportSchema = z.object({
   category: z.string().trim().max(40).default('other'),
   description: z.string().trim().max(4000).default(''),
   location: trimmed(2, 200),
+  // Campus and area are what the report form actually collects; the client composes them into
+  // `location`, which stays required so search and the FTS index keep working unchanged.
+  campus: z.string().trim().max(80).nullish(),
+  area: z.string().trim().max(80).nullish(),
+  itemColor: z.string().trim().max(40).nullish(),
+  additionalDetails: z.string().trim().max(500).nullish(),
   lat: z.number().min(-90).max(90).nullish(),
   lng: z.number().min(-180).max(180).nullish(),
   occurredAt: z.string().trim().max(40).nullish(),

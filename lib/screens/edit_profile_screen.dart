@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../services/api/api_exception.dart';
-import '../viewmodels/profile_viewmodel.dart';
+import '../controllers/profile_controller.dart';
 
 /// Screen that lets the user edit their profile details.
 /// Avatar photo can be updated via camera or gallery using image_picker.
@@ -28,7 +28,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-    final user = context.read<ProfileViewModel>().user;
+    final user = context.read<ProfileController>().user;
     if (user != null) {
       _firstNameController.text = user.firstName;
       _lastNameController.text = user.lastName;
@@ -41,7 +41,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (_isSaving) return;
     final messenger = ScaffoldMessenger.of(context);
     final navigator = Navigator.of(context);
-    final profile = context.read<ProfileViewModel>();
+    final profile = context.read<ProfileController>();
 
     setState(() => _isSaving = true);
     try {
@@ -59,13 +59,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       messenger.showSnackBar(
         const SnackBar(
           content: Text('Profile saved successfully!'),
-          backgroundColor: AppColors.foundGreenEnd,
+          backgroundColor: AppColors.foundThemeEnd,
         ),
       );
       navigator.pop();
     } on ApiException catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text(e.message), backgroundColor: AppColors.lostRedEnd),
+        SnackBar(content: Text(e.message), backgroundColor: AppColors.errorRed),
       );
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -206,7 +206,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to pick image: $e'),
-            backgroundColor: AppColors.lostRedEnd,
+            backgroundColor: AppColors.errorRed,
           ),
         );
       }
@@ -263,7 +263,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       child: _profileImage == null
                           ? Center(
                               child: Text(
-                                context.watch<ProfileViewModel>().user?.initial ?? '?',
+                                context.watch<ProfileController>().user?.initial ?? '?',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 42,

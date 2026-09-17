@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../models/report_item.dart';
 import '../services/api/api_exception.dart';
-import '../viewmodels/dashboard_viewmodel.dart';
+import '../controllers/dashboard_controller.dart';
 import 'gradient_button.dart';
 
 class ItemDetailModal extends StatelessWidget {
@@ -65,7 +65,11 @@ class ItemDetailModal extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Center(
-                  child: Text(item.emojiIcon, style: const TextStyle(fontSize: 32)),
+                  child: Icon(
+                    item.icon,
+                    size: 32,
+                    color: isLost ? AppColors.lostThemeStart : AppColors.foundThemeStart,
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
@@ -74,7 +78,7 @@ class ItemDetailModal extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.title,
+                      item.displayTitle,
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
@@ -133,8 +137,29 @@ class ItemDetailModal extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Detail Items List
-          _buildDetailRow(Icons.location_on_outlined, 'Location', item.location),
-          const SizedBox(height: 12),
+          if (item.itemColor != null && item.itemColor!.isNotEmpty) ...[
+            _buildDetailRow(Icons.palette_outlined, 'Color', item.itemColor!),
+            const SizedBox(height: 12),
+          ],
+          // Campus and area are shown separately when the report has them; reports filed before
+          // the split — and anything from the admin dashboard — only have the one location line.
+          if (item.campus.isNotEmpty || item.area.isNotEmpty) ...[
+            if (item.campus.isNotEmpty) ...[
+              _buildDetailRow(Icons.school_outlined, 'Campus', item.campus),
+              const SizedBox(height: 12),
+            ],
+            if (item.area.isNotEmpty) ...[
+              _buildDetailRow(Icons.place_outlined, 'Area', item.area),
+              const SizedBox(height: 12),
+            ],
+          ] else ...[
+            _buildDetailRow(Icons.location_on_outlined, 'Location', item.location),
+            const SizedBox(height: 12),
+          ],
+          if (item.additionalDetails != null && item.additionalDetails!.isNotEmpty) ...[
+            _buildDetailRow(Icons.info_outline, 'Details', item.additionalDetails!),
+            const SizedBox(height: 12),
+          ],
           _buildDetailRow(Icons.access_time, 'Reported', item.timeAgo),
           if (item.reward != null) ...[
             const SizedBox(height: 12),
@@ -153,7 +178,7 @@ class ItemDetailModal extends StatelessWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    isLost ? 'Messaging reporter of "${item.title}"...' : 'Submitting claim request for "${item.title}"...',
+                    isLost ? 'Messaging reporter of "${item.displayTitle}"...' : 'Submitting claim request for "${item.displayTitle}"...',
                   ),
                 ),
               );
@@ -169,10 +194,10 @@ class ItemDetailModal extends StatelessWidget {
                 final messenger = ScaffoldMessenger.of(context);
                 final navigator = Navigator.of(context);
                 try {
-                  await context.read<DashboardViewModel>().deleteReport(item.id);
+                  await context.read<DashboardController>().deleteReport(item.id);
                   navigator.pop();
                   messenger.showSnackBar(
-                    SnackBar(content: Text('Deleted "${item.title}".')),
+                    SnackBar(content: Text('Deleted "${item.displayTitle}".')),
                   );
                 } on ApiException catch (e) {
                   messenger.showSnackBar(
