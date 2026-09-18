@@ -38,7 +38,10 @@ abstract class IReportWriter {
     double? reward,
     double? lat,
     double? lng,
-    String? imagePath,
+    // A file path cannot represent a picked image on Flutter Web, so the picked image travels as
+    // bytes; [imageFileName] just needs a plausible extension for the server's content-type check.
+    Uint8List? imageBytes,
+    String? imageFileName,
   });
 
   Future<void> deleteReport(String id);

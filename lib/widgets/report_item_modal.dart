@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -41,7 +41,9 @@ class _ReportItemModalState extends State<ReportItemModal> {
   final TextEditingController _imageController = TextEditingController();
 
   final ImagePicker _picker = ImagePicker();
-  File? _pickedImage;
+  // Bytes rather than a File/path: `dart:io.File` and file paths don't exist on Flutter Web, and
+  // `XFile.readAsBytes()` is the one accessor image_picker guarantees on every platform.
+  Uint8List? _pickedImageBytes;
   String? _imageFileName;
 
   /// The picker doubles as the category chooser: the server derives the card's emoji and swatch
@@ -176,8 +178,9 @@ class _ReportItemModalState extends State<ReportItemModal> {
         imageQuality: 85,
       );
       if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
         setState(() {
-          _pickedImage = File(pickedFile.path);
+          _pickedImageBytes = bytes;
           _imageFileName = pickedFile.name;
           _imageController.text = _imageFileName!;
         });
@@ -252,7 +255,8 @@ class _ReportItemModalState extends State<ReportItemModal> {
             additionalDetails: additionalDetails.isNotEmpty ? additionalDetails : null,
             category: _selectedCategory,
             reward: reward,
-            imagePath: _pickedImage?.path,
+            imageBytes: _pickedImageBytes,
+            imageFileName: _imageFileName,
           );
 
       navigator.pop();
@@ -380,9 +384,11 @@ class _ReportItemModalState extends State<ReportItemModal> {
             ),
             const SizedBox(height: 14),
 
-            // Form Field: Upload Image (Camera / Gallery picker)
+            // Form Field: Upload Image (Camera / Gallery picker) — optional, so a submission
+            // never blocks on it: the report is created either way, and the photo is a second,
+            // best-effort request (see ApiReportRepository.addReport).
             const Text(
-              'Upload Image',
+              'Upload Image (Optional)',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -398,14 +404,14 @@ class _ReportItemModalState extends State<ReportItemModal> {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.borderColor, width: 1.2),
                 ),
-                child: _pickedImage != null
+                child: _pickedImageBytes != null
                     ? Column(
                         children: [
                           ClipRRect(
                             borderRadius: const BorderRadius.vertical(
                                 top: Radius.circular(15)),
-                            child: Image.file(
-                              _pickedImage!,
+                            child: Image.memory(
+                              _pickedImageBytes!,
                               width: double.infinity,
                               height: 160,
                               fit: BoxFit.cover,

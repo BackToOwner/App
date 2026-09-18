@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../models/report_item.dart';
 import '../services/filter/report_filter_strategy.dart';
@@ -47,7 +48,8 @@ class DashboardController extends ChangeNotifier {
     String? description,
     String? category,
     double? reward,
-    String? imagePath,
+    Uint8List? imageBytes,
+    String? imageFileName,
   }) {
     return _repository.addReport(
       title: title,
@@ -59,7 +61,8 @@ class DashboardController extends ChangeNotifier {
       description: description,
       category: category,
       reward: reward,
-      imagePath: imagePath,
+      imageBytes: imageBytes,
+      imageFileName: imageFileName,
     );
   }
 

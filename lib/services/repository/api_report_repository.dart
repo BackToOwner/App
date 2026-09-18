@@ -86,7 +86,8 @@ class ApiReportRepository extends ValueNotifier<List<ReportItem>> implements IRe
     double? reward,
     double? lat,
     double? lng,
-    String? imagePath,
+    Uint8List? imageBytes,
+    String? imageFileName,
   }) async {
     // `location` stays the single searchable string the feed and FTS index are built on; the
     // parts are sent alongside it so the detail sheet can show them separately.
@@ -108,11 +109,15 @@ class ApiReportRepository extends ValueNotifier<List<ReportItem>> implements IRe
 
     var item = ReportItem.fromJson(created);
 
-    // The photo is a second request: the report exists first, so a failed upload loses the image
-    // rather than the whole report.
-    if (imagePath != null && imagePath.isNotEmpty) {
+    // The photo is a second, optional request: the report exists first, so a failed or skipped
+    // upload loses only the image, never the report itself.
+    if (imageBytes != null && imageBytes.isNotEmpty) {
       try {
-        final withImage = await _api.uploadFile('/reports/${item.id}/images', imagePath);
+        final withImage = await _api.uploadFile(
+          '/reports/${item.id}/images',
+          imageBytes,
+          filename: imageFileName ?? 'photo.jpg',
+        );
         item = ReportItem.fromJson(withImage);
       } on ApiException catch (e) {
         // Keep the report; the user can add the photo again from the detail screen. The upload
