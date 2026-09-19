@@ -510,6 +510,7 @@ class _DashboardHomeViewState extends State<_DashboardHomeView> {
                     iconColor: const Color(0xFF22C55E),
                     value: stats.itemsReturned,
                     label: 'Items Returned',
+                    isLoading: !stats.hasData,
                   ),
                   const SizedBox(width: 8),
                   _buildStatCard(
@@ -517,6 +518,7 @@ class _DashboardHomeViewState extends State<_DashboardHomeView> {
                     iconColor: const Color(0xFF60A5FA),
                     value: stats.activeCases,
                     label: 'Active Cases',
+                    isLoading: !stats.hasData,
                   ),
                   const SizedBox(width: 8),
                   _buildStatCard(
@@ -524,6 +526,7 @@ class _DashboardHomeViewState extends State<_DashboardHomeView> {
                     iconColor: const Color(0xFFFF7675),
                     value: stats.successRate,
                     label: 'Success Rate',
+                    isLoading: !stats.hasData,
                   ),
                 ],
               ),
@@ -539,6 +542,7 @@ class _DashboardHomeViewState extends State<_DashboardHomeView> {
     required Color iconColor,
     required String value,
     required String label,
+    required bool isLoading,
   }) {
     return Expanded(
       child: Container(
@@ -560,15 +564,26 @@ class _DashboardHomeViewState extends State<_DashboardHomeView> {
               child: Icon(icon, color: iconColor, size: 15),
             ),
             const SizedBox(height: 6),
-            Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.2,
-              ),
-            ),
+            // A skeleton block while the real numbers are still loading, rather than an em dash
+            // that reads like the platform has no stats at all.
+            isLoading
+                ? Container(
+                    width: 30,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(50),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  )
+                : Text(
+                    value,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
             const SizedBox(height: 2),
             Text(
               label,

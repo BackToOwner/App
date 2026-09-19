@@ -137,4 +137,14 @@ class ApiReportRepository extends ValueNotifier<List<ReportItem>> implements IRe
     value = value.where((item) => item.id != id).toList();
     _mine = _mine.where((item) => item.id != id).toList();
   }
+
+  @override
+  Future<void> claimReport(String reportId, {String message = ''}) async {
+    await _api.post<dynamic>('/reports/$reportId/claims', data: {'message': message});
+  }
+
+  @override
+  Future<void> addComment(String reportId, String body) async {
+    await _api.post<dynamic>('/reports/$reportId/comments', data: {'body': body});
+  }
 }

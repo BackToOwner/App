@@ -259,25 +259,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           width: 3,
                         ),
                         color: AppColors.primaryCyan,
-                        image: _profileImageBytes != null
-                            ? DecorationImage(
-                                image: MemoryImage(_profileImageBytes!),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
                       ),
-                      child: _profileImageBytes == null
-                          ? Center(
-                              child: Text(
-                                context.watch<ProfileController>().user?.initial ?? '?',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 42,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            )
-                          : null,
+                      child: ClipOval(child: _buildAvatarContent(context)),
                     ),
                     Positioned(
                       bottom: 0,
@@ -361,6 +344,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             const SizedBox(height: 20),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Freshly-picked bytes take priority; otherwise falls back to the saved avatar URL, matching
+  /// how the main profile screen shows it, and finally to the user's initial when there is none.
+  Widget _buildAvatarContent(BuildContext context) {
+    final bytes = _profileImageBytes;
+    if (bytes != null) {
+      return Image.memory(bytes, width: 100, height: 100, fit: BoxFit.cover);
+    }
+
+    final user = context.watch<ProfileController>().user;
+    final avatarUrl = user?.avatar;
+    if (avatarUrl != null) {
+      return Image.network(
+        avatarUrl,
+        width: 100,
+        height: 100,
+        fit: BoxFit.cover,
+        errorBuilder: (_, error, stack) => _buildAvatarInitial(user?.initial ?? '?'),
+      );
+    }
+    return _buildAvatarInitial(user?.initial ?? '?');
+  }
+
+  Widget _buildAvatarInitial(String initial) {
+    return Center(
+      child: Text(
+        initial,
+        style: const TextStyle(color: Colors.white, fontSize: 42, fontWeight: FontWeight.w800),
       ),
     );
   }

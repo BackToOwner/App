@@ -45,6 +45,12 @@ abstract class IReportWriter {
   });
 
   Future<void> deleteReport(String id);
+
+  /// Files a claim on a found item. [message] is optional context for the owner reviewing it.
+  Future<void> claimReport(String reportId, {String message});
+
+  /// Posts a message on a report's comment thread — used to contact the reporter.
+  Future<void> addComment(String reportId, String body);
 }
 
 /// Consolidated repository interface for report data operations (DIP, LSP).

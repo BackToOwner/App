@@ -173,16 +173,7 @@ class ItemDetailModal extends StatelessWidget {
           GradientButton(
             text: isLost ? 'Contact Owner / Reporter' : 'Claim Found Item',
             gradient: isLost ? AppColors.reportLostGradient : AppColors.reportFoundGradient,
-            onPressed: () {
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    isLost ? 'Messaging reporter of "${item.displayTitle}"...' : 'Submitting claim request for "${item.displayTitle}"...',
-                  ),
-                ),
-              );
-            },
+            onPressed: () => isLost ? _contactReporter(context) : _claimItem(context),
           ),
           const SizedBox(height: 10),
 
@@ -210,6 +201,90 @@ class ItemDetailModal extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _contactReporter(BuildContext context) async {
+    final message = await _promptForMessage(
+      context,
+      title: 'Contact Reporter',
+      hintText: 'Write a message about "${item.displayTitle}"...',
+      submitLabel: 'Send',
+      requireMessage: true,
+    );
+    if (message == null || !context.mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    try {
+      await context.read<DashboardController>().contactReporter(item.id, message);
+      navigator.pop();
+      messenger.showSnackBar(const SnackBar(content: Text('Message sent to the reporter.')));
+    } on ApiException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message), backgroundColor: Colors.red));
+    }
+  }
+
+  Future<void> _claimItem(BuildContext context) async {
+    final message = await _promptForMessage(
+      context,
+      title: 'Claim This Item',
+      hintText: 'Describe how you can identify it (optional)...',
+      submitLabel: 'Submit Claim',
+      requireMessage: false,
+    );
+    if (message == null || !context.mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    try {
+      await context.read<DashboardController>().claimReport(item.id, message: message);
+      navigator.pop();
+      messenger.showSnackBar(const SnackBar(content: Text('Claim submitted — the owner will review it.')));
+    } on ApiException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message), backgroundColor: Colors.red));
+    }
+  }
+
+  /// Shows a text-entry dialog and returns the trimmed message, or null if the user cancelled.
+  /// When [requireMessage] is true the submit button stays disabled until there is text.
+  Future<String?> _promptForMessage(
+    BuildContext context, {
+    required String title,
+    required String hintText,
+    required String submitLabel,
+    required bool requireMessage,
+  }) {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setState) {
+          final canSubmit = !requireMessage || controller.text.trim().isNotEmpty;
+          return AlertDialog(
+            title: Text(title),
+            content: TextField(
+              controller: controller,
+              autofocus: true,
+              maxLines: 3,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(hintText: hintText),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: canSubmit
+                    ? () => Navigator.of(dialogContext).pop(controller.text.trim())
+                    : null,
+                child: Text(submitLabel),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

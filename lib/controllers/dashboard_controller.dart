@@ -68,6 +68,14 @@ class DashboardController extends ChangeNotifier {
 
   Future<void> deleteReport(String id) => _repository.deleteReport(id);
 
+  /// Files a claim on a found item — "Claim Found Item" in the detail sheet.
+  Future<void> claimReport(String reportId, {String message = ''}) =>
+      _repository.claimReport(reportId, message: message);
+
+  /// Posts a message to the reporter — "Contact Owner / Reporter" in the detail sheet.
+  Future<void> contactReporter(String reportId, String message) =>
+      _repository.addComment(reportId, message);
+
   void setFilter(ReportType filter) {
     if (_filterStrategy.type != filter) {
       switch (filter) {

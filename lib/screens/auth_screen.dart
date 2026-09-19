@@ -1,4 +1,6 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../controllers/auth_controller.dart';
@@ -15,8 +17,122 @@ class AuthScreen extends StatelessWidget {
   }
 }
 
-class _AuthScreenContent extends StatelessWidget {
+class _AuthScreenContent extends StatefulWidget {
   const _AuthScreenContent();
+
+  @override
+  State<_AuthScreenContent> createState() => _AuthScreenContentState();
+}
+
+class _AuthScreenContentState extends State<_AuthScreenContent> {
+  final ImagePicker _picker = ImagePicker();
+  // Kept client-side only: the backend's sign-up form takes an ID *number*, not a photo, so there
+  // is nowhere to upload this yet. Attaching it at least gives the user a real, working capture
+  // instead of a button that claimed to scan the card and did nothing.
+  Uint8List? _idPhotoBytes;
+  String? _idPhotoFileName;
+
+  Future<void> _pickIdPhoto() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 44,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.borderColor,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Attach ID Photo',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildPickerOption(
+                    icon: Icons.camera_alt,
+                    label: 'Camera',
+                    color: AppColors.primaryBlue,
+                    onTap: () => Navigator.pop(ctx, ImageSource.camera),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildPickerOption(
+                    icon: Icons.photo_library,
+                    label: 'Gallery',
+                    color: AppColors.primaryCyan,
+                    onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+
+    try {
+      final pickedFile = await _picker.pickImage(source: source, maxWidth: 1024, maxHeight: 1024, imageQuality: 85);
+      if (pickedFile == null) return;
+      final bytes = await pickedFile.readAsBytes();
+      setState(() {
+        _idPhotoBytes = bytes;
+        _idPhotoFileName = pickedFile.name;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('ID photo attached: $_idPhotoFileName')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to attach photo: $e'), backgroundColor: AppColors.errorRed),
+        );
+      }
+    }
+  }
+
+  Widget _buildPickerOption({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          color: color.withAlpha(18),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withAlpha(50), width: 1.2),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 6),
+            Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -155,21 +271,16 @@ class _AuthScreenContent extends StatelessWidget {
                           ),
                           const SizedBox(height: 18),
                           CustomTextField(
-                            label: 'ID Verification',
-                            hintText: 'Scan or upload your ID card',
+                            label: 'ID Verification Number',
+                            hintText: 'e.g. 200012345678',
                             prefixIcon: Icons.badge_outlined,
                             controller: controller.idVerificationController,
                             suffixWidget: IconButton(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('ID verification scanner initialized.'),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(
-                                Icons.camera_alt_outlined,
-                                color: AppColors.primaryBlue,
+                              tooltip: _idPhotoBytes == null ? 'Attach a photo of your ID' : 'Photo attached',
+                              onPressed: _pickIdPhoto,
+                              icon: Icon(
+                                _idPhotoBytes == null ? Icons.camera_alt_outlined : Icons.check_circle,
+                                color: _idPhotoBytes == null ? AppColors.primaryBlue : AppColors.foundThemeStart,
                                 size: 20,
                               ),
                             ),

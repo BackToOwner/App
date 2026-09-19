@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../controllers/support_controller.dart';
+import '../services/api/api_exception.dart';
 
 /// Help & Support screen.
 ///
@@ -21,6 +22,66 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<SupportController>().load();
     });
+  }
+
+  /// Live Chat isn't implemented server-side yet, so this opens the ticket form the backend
+  /// already supports (`SupportController.submitTicket` / `POST /support/tickets`) instead of a
+  /// button that pretended a chat session had started.
+  Future<void> _openContactSupportDialog() async {
+    final subjectController = TextEditingController();
+    final messageController = TextEditingController();
+
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Contact Support'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: subjectController,
+              decoration: const InputDecoration(labelText: 'Subject'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: messageController,
+              maxLines: 4,
+              decoration: const InputDecoration(labelText: 'How can we help?'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Send'),
+          ),
+        ],
+      ),
+    );
+    if (submitted != true || !mounted) return;
+
+    final subject = subjectController.text.trim();
+    final message = messageController.text.trim();
+    if (subject.length < 3 || message.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a subject (3+ characters) and a message.')),
+      );
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await context.read<SupportController>().submitTicket(subject: subject, message: message);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Message sent — our team will get back to you soon.')),
+      );
+    } on ApiException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message), backgroundColor: AppColors.errorRed));
+    }
   }
 
   @override
@@ -70,6 +131,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
               subtitle: 'Chat with our team',
               trailing: '9AM – 9PM',
               trailingColor: AppColors.primaryCyan,
+              onTap: _openContactSupportDialog,
             ),
             const SizedBox(height: 24),
 
@@ -263,66 +325,77 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     required String subtitle,
     required String trailing,
     required Color trailingColor,
+    VoidCallback? onTap,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.borderColor, width: 1),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: trailingColor.withAlpha(20),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: trailingColor, size: 20),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: trailingColor.withAlpha(20),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: trailingColor, size: 20),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: trailingColor.withAlpha(16),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    trailing,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: trailingColor,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: trailingColor.withAlpha(16),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              trailing,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: trailingColor,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

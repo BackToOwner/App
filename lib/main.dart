@@ -5,9 +5,6 @@ import 'package:provider/provider.dart';
 import 'constants/app_colors.dart';
 import 'screens/auth_screen.dart';
 import 'screens/dashboard_screen.dart';
-import 'screens/found_screen.dart';
-import 'screens/lost_screen.dart';
-import 'screens/profile_screen.dart';
 import 'screens/splash_screen.dart';
 import 'services/api/api_client.dart';
 import 'services/auth/api_auth_service.dart';
@@ -103,13 +100,14 @@ class _BackToOwnerAppState extends State<BackToOwnerApp> {
         // Starts on the splash screen, which restores a stored session before deciding whether
         // the user sees the dashboard or the sign-in form.
         initialRoute: '/',
+        // '/lost', '/found' and '/profile' aren't registered here: those tabs are reached by
+        // DashboardController.setNavIndex switching the dashboard's IndexedStack, not by
+        // Navigator — a pushed route would stack a second screen on top instead of switching tabs
+        // and would lose the bottom nav bar.
         routes: {
           '/': (context) => const SplashScreen(),
           '/auth': (context) => const AuthScreen(),
           '/dashboard': (context) => const DashboardScreen(),
-          '/lost': (context) => const LostScreen(),
-          '/found': (context) => const FoundScreen(),
-          '/profile': (context) => const ProfileScreen(),
         },
       ),
     );

@@ -148,6 +148,19 @@ class FakeReportRepository extends ValueNotifier<List<ReportItem>> implements IR
   Future<void> deleteReport(String id) async {
     value = value.where((i) => i.id != id).toList();
   }
+
+  final List<String> claimedReportIds = [];
+  final List<String> commentedReportIds = [];
+
+  @override
+  Future<void> claimReport(String reportId, {String message = ''}) async {
+    claimedReportIds.add(reportId);
+  }
+
+  @override
+  Future<void> addComment(String reportId, String body) async {
+    commentedReportIds.add(reportId);
+  }
 }
 
 ReportItem _item({
