@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../models/app_user.dart';
 import '../services/api/api_client.dart';
@@ -60,8 +61,8 @@ class ProfileController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> uploadAvatar(String filePath) async {
-    final data = await _api.uploadFile('/me/avatar', filePath, field: 'image');
+  Future<void> uploadAvatar(Uint8List bytes, String filename) async {
+    final data = await _api.uploadFile('/me/avatar', bytes, filename: filename, field: 'image');
     _user = AppUser.fromJson(data);
     _syncAuthCache();
     notifyListeners();

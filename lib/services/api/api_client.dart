@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import '../../config/api_config.dart';
 import 'api_exception.dart';
@@ -172,14 +173,19 @@ class ApiClient {
     return (body['data'] as List).whereType<Map<String, dynamic>>().toList();
   }
 
-  /// Multipart upload. [field] is `image` for an avatar, `images` for report photos.
+  /// Multipart upload from raw bytes rather than a file path. `MultipartFile.fromFile` and
+  /// `dart:io.File` do not exist on Flutter Web, so bytes read via `XFile.readAsBytes()` are the
+  /// one representation that works on every platform this app targets. [field] is `image` for an
+  /// avatar, `images` for report photos; [filename] just needs a plausible extension — the
+  /// backend renames the file on disk and uses this only to pick a Content-Type and validate it.
   Future<Map<String, dynamic>> uploadFile(
     String path,
-    String filePath, {
+    Uint8List bytes, {
+    required String filename,
     String field = 'images',
   }) async {
     final form = FormData.fromMap({
-      field: await MultipartFile.fromFile(filePath, contentType: _mediaTypeFor(filePath)),
+      field: MultipartFile.fromBytes(bytes, filename: filename, contentType: _mediaTypeFor(filename)),
     });
     final body = await _send('POST', path, data: form);
     return body['data'] as Map<String, dynamic>;
@@ -188,8 +194,8 @@ class ApiClient {
   /// Without this the part goes out as `application/octet-stream` (Dio's default when no
   /// contentType is given) and the backend's upload filter rejects it with
   /// "Only JPG, PNG and WebP images are allowed" — the bytes are fine, only the header is wrong.
-  static DioMediaType _mediaTypeFor(String filePath) {
-    final ext = filePath.split('.').last.toLowerCase();
+  static DioMediaType _mediaTypeFor(String filename) {
+    final ext = filename.split('.').last.toLowerCase();
     switch (ext) {
       case 'png':
         return DioMediaType('image', 'png');

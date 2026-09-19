@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -123,7 +124,8 @@ class FakeReportRepository extends ValueNotifier<List<ReportItem>> implements IR
     double? reward,
     double? lat,
     double? lng,
-    String? imagePath,
+    Uint8List? imageBytes,
+    String? imageFileName,
   }) async {
     final item = ReportItem(
       id: DateTime.now().microsecondsSinceEpoch.toString(),

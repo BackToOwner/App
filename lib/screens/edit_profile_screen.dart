@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -23,7 +23,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   bool _isSaving = false;
 
   final ImagePicker _picker = ImagePicker();
-  File? _profileImage;
+  // Bytes rather than a File/path: `dart:io.File` and file paths don't exist on Flutter Web.
+  Uint8List? _profileImageBytes;
+  String? _profileImageFileName;
 
   @override
   void initState() {
@@ -53,8 +55,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       );
 
       // The photo is a separate endpoint, so it only uploads when one was picked.
-      final image = _profileImage;
-      if (image != null) await profile.uploadAvatar(image.path);
+      final bytes = _profileImageBytes;
+      if (bytes != null) {
+        await profile.uploadAvatar(bytes, _profileImageFileName ?? 'avatar.jpg');
+      }
 
       messenger.showSnackBar(
         const SnackBar(
@@ -189,8 +193,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         imageQuality: 85,
       );
       if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
         setState(() {
-          _profileImage = File(pickedFile.path);
+          _profileImageBytes = bytes;
+          _profileImageFileName = pickedFile.name;
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -253,14 +259,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           width: 3,
                         ),
                         color: AppColors.primaryCyan,
-                        image: _profileImage != null
+                        image: _profileImageBytes != null
                             ? DecorationImage(
-                                image: FileImage(_profileImage!),
+                                image: MemoryImage(_profileImageBytes!),
                                 fit: BoxFit.cover,
                               )
                             : null,
                       ),
-                      child: _profileImage == null
+                      child: _profileImageBytes == null
                           ? Center(
                               child: Text(
                                 context.watch<ProfileController>().user?.initial ?? '?',

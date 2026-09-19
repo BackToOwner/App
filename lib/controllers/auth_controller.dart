@@ -51,6 +51,14 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  /// Matches a leading `+`, a 1-3 digit country code, then exactly 9 digits for the subscriber
+  /// number (e.g. `+94712345678`) — spaces in the input are stripped before this runs.
+  static final RegExp _phonePattern = RegExp(r'^\+\d{1,3}\d{9}$');
+
+  /// Sri Lankan NIC: digits only, up to 12 of them (the new 12-digit format; the old 9-digit
+  /// format plus a letter is not accepted here since the field is validated as digits).
+  static final RegExp _nicPattern = RegExp(r'^\d{1,12}$');
+
   /// Local checks first, so an empty form never reaches the network — and, more importantly, so
   /// a blank password can never be treated as a successful sign-in.
   String? _validate() {
@@ -64,6 +72,20 @@ class AuthController extends ChangeNotifier {
     if (password.isEmpty) return 'Please enter your password.';
     if (!_isSignIn && password.length < 8) {
       return 'Password must be at least 8 characters.';
+    }
+
+    if (!_isSignIn) {
+      final phone = phoneController.text.trim().replaceAll(' ', '');
+      if (phone.isEmpty) return 'Please enter your phone number.';
+      if (!_phonePattern.hasMatch(phone)) {
+        return 'Enter your phone number as a country code followed by 9 digits (e.g. +94712345678).';
+      }
+
+      final idVerification = idVerificationController.text.trim();
+      if (idVerification.isEmpty) return 'Please enter your NIC / ID verification number.';
+      if (!_nicPattern.hasMatch(idVerification)) {
+        return 'NIC must contain digits only, up to 12 digits.';
+      }
     }
     return null;
   }
@@ -119,18 +141,33 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  Future<void> submitGoogleAuth(BuildContext context) async {
+  Future<AppUser?> submitGoogleAuth(BuildContext context) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      await _authService.signInWithGoogle();
-      if (context.mounted) {
-        Navigator.of(context).pushReplacementNamed('/dashboard');
+      final user = await _authService.signInWithGoogle();
+      if (!context.mounted) return user;
+
+      // Mirror submitAuth: without this, signing out and back in as someone else via Google
+      // would leave the previous account's profile and feed on screen.
+      context.read<ProfileController>().setUser(user);
+      final dashboard = context.read<DashboardController>();
+      final navigator = Navigator.of(context);
+      try {
+        await dashboard.refresh();
+      } on ApiException {
+        // The sign-in itself succeeded; an empty feed can be pulled to refresh on the dashboard.
       }
+      navigator.pushReplacementNamed('/dashboard');
+      return user;
     } on ApiException catch (e) {
       _errorMessage = e.message;
+      return null;
+    } catch (e) {
+      _errorMessage = 'Something went wrong. Please try again.';
+      return null;
     } finally {
       _isLoading = false;
       notifyListeners();
