@@ -7,6 +7,7 @@ import 'screens/auth_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/found_screen.dart';
 import 'screens/lost_screen.dart';
+import 'screens/privacy_notice_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/splash_screen.dart';
 import 'services/api/api_client.dart';
@@ -106,6 +107,7 @@ class _BackToOwnerAppState extends State<BackToOwnerApp> {
         routes: {
           '/': (context) => const SplashScreen(),
           '/auth': (context) => const AuthScreen(),
+          '/privacy-notice': (context) => const PrivacyNoticeScreen(),
           '/dashboard': (context) => const DashboardScreen(),
           '/lost': (context) => const LostScreen(),
           '/found': (context) => const FoundScreen(),

@@ -127,7 +127,7 @@ class AuthController extends ChangeNotifier {
       } on ApiException {
         // The sign-in itself succeeded; an empty feed can be pulled to refresh on the dashboard.
       }
-      navigator.pushReplacementNamed('/dashboard');
+      navigator.pushReplacementNamed('/privacy-notice');
       return user;
     } on ApiException catch (e) {
       _errorMessage = e.message;
@@ -160,7 +160,7 @@ class AuthController extends ChangeNotifier {
       } on ApiException {
         // The sign-in itself succeeded; an empty feed can be pulled to refresh on the dashboard.
       }
-      navigator.pushReplacementNamed('/dashboard');
+      navigator.pushReplacementNamed('/privacy-notice');
       return user;
     } on ApiException catch (e) {
       _errorMessage = e.message;
