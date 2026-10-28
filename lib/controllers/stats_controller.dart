@@ -8,21 +8,21 @@ class StatsController extends ChangeNotifier {
 
   StatsController(this._api);
 
-  int? _itemsReturned;
+  int? _itemsClosed;
   int? _activeCases;
   double? _successRate;
 
-  bool get hasData => _itemsReturned != null;
+  bool get hasData => _itemsClosed != null;
 
   /// Em dash until the numbers arrive, so the cards never show an invented figure.
-  String get itemsReturned => _itemsReturned == null ? '—' : _format(_itemsReturned!);
+  String get itemsClosed => _itemsClosed == null ? '—' : _format(_itemsClosed!);
   String get activeCases => _activeCases == null ? '—' : _format(_activeCases!);
   String get successRate => _successRate == null ? '—' : '${_successRate!.toStringAsFixed(0)}%';
 
   Future<void> load() async {
     try {
       final data = await _api.get<Map<String, dynamic>>('/stats/home', skipAuth: true);
-      _itemsReturned = (data['itemsReturned'] as num?)?.toInt() ?? 0;
+      _itemsClosed = (data['itemsClosed'] as num?)?.toInt() ?? 0;
       _activeCases = (data['activeCases'] as num?)?.toInt() ?? 0;
       _successRate = (data['successRate'] as num?)?.toDouble() ?? 0;
       notifyListeners();

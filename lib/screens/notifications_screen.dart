@@ -38,11 +38,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         centerTitle: true,
         actions: [
           TextButton(
-            onPressed: hasUnread ? () => context.read<NotificationsController>().markAllRead() : null,
+            onPressed: hasUnread
+                ? () => context.read<NotificationsController>().markAllRead()
+                : null,
             child: Text(
               'Mark all read',
               style: TextStyle(
-                color: hasUnread ? AppColors.primaryCyan : Colors.white.withAlpha(70),
+                color: hasUnread
+                    ? AppColors.primaryCyan
+                    : Colors.white.withAlpha(70),
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
               ),
@@ -53,19 +57,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       body: vm.isLoading && notifications.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : notifications.isEmpty
-              ? RefreshIndicator(
-                  onRefresh: vm.load,
-                  child: ListView(children: [SizedBox(height: 120), _buildEmptyState()]),
-                )
-              : RefreshIndicator(
-                  onRefresh: vm.load,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                    itemCount: notifications.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) => _buildTile(notifications[index]),
-                  ),
-                ),
+          ? RefreshIndicator(
+              onRefresh: vm.load,
+              child: ListView(
+                children: [SizedBox(height: 120), _buildEmptyState()],
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: vm.load,
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                itemCount: notifications.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
+                itemBuilder: (context, index) =>
+                    _buildTile(notifications[index]),
+              ),
+            ),
     );
   }
 
@@ -109,14 +116,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final visual = _visualFor(n.type);
 
     return GestureDetector(
-      onTap: () => context.read<NotificationsController>().markRead(n),
+      onTap: () {
+        // Notifications are read-only. Open conversations from the report details instead.
+        context.read<NotificationsController>().markRead(n);
+      },
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: n.isRead ? AppColors.borderColor : visual.color.withAlpha(70),
+            color: n.isRead
+                ? AppColors.borderColor
+                : visual.color.withAlpha(70),
             width: n.isRead ? 1 : 1.4,
           ),
           boxShadow: n.isRead
@@ -153,7 +165,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           n.title,
                           style: TextStyle(
                             fontSize: 14,
-                            fontWeight: n.isRead ? FontWeight.w700 : FontWeight.w800,
+                            fontWeight: n.isRead
+                                ? FontWeight.w700
+                                : FontWeight.w800,
                             color: AppColors.textPrimary,
                           ),
                         ),
@@ -210,7 +224,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case NotificationType.info:
         return (icon: Icons.trending_up_rounded, color: AppColors.primaryBlue);
       case NotificationType.reminder:
-        return (icon: Icons.notifications_active_rounded, color: AppColors.errorRed);
+        return (
+          icon: Icons.notifications_active_rounded,
+          color: AppColors.errorRed,
+        );
     }
   }
 }

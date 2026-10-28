@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -18,6 +21,7 @@ import 'services/repository/report_repository_interface.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/dashboard_controller.dart';
 import 'controllers/notifications_controller.dart';
+import 'controllers/chat_unread_controller.dart';
 import 'controllers/profile_controller.dart';
 import 'controllers/stats_controller.dart';
 import 'controllers/support_controller.dart';
@@ -39,6 +43,9 @@ class BackToOwnerApp extends StatefulWidget {
 }
 
 class _BackToOwnerAppState extends State<BackToOwnerApp> {
+  final AppLinks _appLinks = AppLinks();
+  StreamSubscription<Uri>? _linkSubscription;
+
   late final ApiClient _apiClient;
   late final ApiAuthService _authService;
   late final ApiReportRepository _reportRepository;
@@ -46,13 +53,136 @@ class _BackToOwnerAppState extends State<BackToOwnerApp> {
   @override
   void initState() {
     super.initState();
+    _linkSubscription = _appLinks.uriLinkStream.listen(
+      _handleIncomingLink,
+      onError: (Object error) {},
+    );
+    unawaited(_handleInitialLink());
+
     _apiClient = ApiClient();
     _authService = ApiAuthService(_apiClient);
     _reportRepository = ApiReportRepository(_apiClient);
 
     _apiClient.onSessionExpired = () {
-      navigatorKey.currentState?.pushNamedAndRemoveUntil('/auth', (route) => false);
+      navigatorKey.currentState?.pushNamedAndRemoveUntil(
+        '/auth',
+        (route) => false,
+      );
     };
+  }
+
+  Future<void> _handleInitialLink() async {
+    try {
+      final uri = await _appLinks.getInitialLink();
+      if (uri != null) _handleIncomingLink(uri);
+    } catch (_) {
+      // No initial deep link is normal when launching the app directly.
+    }
+  }
+
+  Future<void> _handleIncomingLink(Uri uri) async {
+    if (uri.scheme != 'backtoowner' || uri.host != 'login-callback') return;
+
+    Map<String, String> fragmentParams = {};
+    try {
+      fragmentParams = Uri.splitQueryString(uri.fragment);
+    } catch (_) {
+      // A malformed fragment will be reported as an incomplete session below.
+    }
+
+    final params = <String, String>{...uri.queryParameters, ...fragmentParams};
+
+    final navigator = navigatorKey.currentState;
+    if (navigator == null || !mounted) return;
+
+    final callbackError = params['error_description'] ?? params['error'];
+
+    if (callbackError != null && callbackError.isNotEmpty) {
+      navigator.pushNamedAndRemoveUntil('/auth', (route) => false);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            SnackBar(
+              content: Text(
+                'Email confirmation failed: ${Uri.decodeComponent(callbackError.replaceAll('+', ' '))}',
+              ),
+            ),
+          );
+        }
+      });
+      return;
+    }
+
+    final accessToken = params['access_token'];
+    final refreshToken = params['refresh_token'];
+
+    if (accessToken == null ||
+        accessToken.isEmpty ||
+        refreshToken == null ||
+        refreshToken.isEmpty) {
+      navigator.pushNamedAndRemoveUntil('/auth', (route) => false);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            const SnackBar(
+              content: Text(
+                'The confirmation link did not provide a complete session. Please sign in or request a new confirmation email.',
+              ),
+            ),
+          );
+        }
+      });
+      return;
+    }
+
+    try {
+      await _authService.confirmEmail(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+      );
+
+      if (!mounted) return;
+      navigatorKey.currentState?.pushNamedAndRemoveUntil(
+        '/privacy-notice',
+        (route) => false,
+      );
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            const SnackBar(content: Text('Email confirmed successfully!')),
+          );
+        }
+      });
+    } catch (error) {
+      if (!mounted) return;
+      navigatorKey.currentState?.pushNamedAndRemoveUntil(
+        '/auth',
+        (route) => false,
+      );
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+          ScaffoldMessenger.maybeOf(
+            context,
+          )?.showSnackBar(SnackBar(content: Text(error.toString())));
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
   }
 
   @override
@@ -71,13 +201,21 @@ class _BackToOwnerAppState extends State<BackToOwnerApp> {
           create: (context) => AuthController(context.read<IAuthService>()),
         ),
         ChangeNotifierProvider<DashboardController>(
-          create: (context) => DashboardController(context.read<IReportRepository>()),
+          create: (context) =>
+              DashboardController(context.read<IReportRepository>()),
         ),
         ChangeNotifierProvider<ProfileController>(
-          create: (context) => ProfileController(context.read<ApiClient>(), context.read<IAuthService>()),
+          create: (context) => ProfileController(
+            context.read<ApiClient>(),
+            context.read<IAuthService>(),
+          ),
         ),
         ChangeNotifierProvider<NotificationsController>(
-          create: (context) => NotificationsController(context.read<ApiClient>()),
+          create: (context) =>
+              NotificationsController(context.read<ApiClient>()),
+        ),
+        ChangeNotifierProvider<ChatUnreadController>(
+          create: (context) => ChatUnreadController(context.read<ApiClient>()),
         ),
         ChangeNotifierProvider<StatsController>(
           create: (context) => StatsController(context.read<ApiClient>()),

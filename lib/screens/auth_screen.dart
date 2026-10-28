@@ -148,6 +148,20 @@ class _AuthScreenContent extends StatelessWidget {
                         if (!controller.isSignIn) ...[
                           const SizedBox(height: 18),
                           CustomTextField(
+                            label: 'First Name',
+                            hintText: 'Enter your first name',
+                            prefixIcon: Icons.person_outline,
+                            controller: controller.firstNameController,
+                          ),
+                          const SizedBox(height: 18),
+                          CustomTextField(
+                            label: 'Last Name',
+                            hintText: 'Enter your last name',
+                            prefixIcon: Icons.person_outline,
+                            controller: controller.lastNameController,
+                          ),
+                          const SizedBox(height: 18),
+                          CustomTextField(
                             label: 'Phone Number',
                             hintText: '+94 71 234 5678',
                             prefixIcon: Icons.phone_outlined,
@@ -156,14 +170,17 @@ class _AuthScreenContent extends StatelessWidget {
                           const SizedBox(height: 18),
                           CustomTextField(
                             label: 'ID Verification',
-                            hintText: 'Scan or upload your ID card',
+                            hintText:
+                                'Optional — enter NIC number if available',
                             prefixIcon: Icons.badge_outlined,
                             controller: controller.idVerificationController,
                             suffixWidget: IconButton(
                               onPressed: () {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('ID verification scanner initialized.'),
+                                    content: Text(
+                                      'ID verification scanner initialized.',
+                                    ),
                                   ),
                                 );
                               },
@@ -180,22 +197,70 @@ class _AuthScreenContent extends StatelessWidget {
                           Container(
                             width: double.infinity,
                             margin: const EdgeInsets.only(bottom: 14),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.errorRed.withAlpha(24),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.errorRed.withAlpha(90)),
+                              border: Border.all(
+                                color: AppColors.errorRed.withAlpha(90),
+                              ),
                             ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.error_outline, color: AppColors.errorRed, size: 18),
+                                const Icon(
+                                  Icons.error_outline,
+                                  color: AppColors.errorRed,
+                                  size: 18,
+                                ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
                                     controller.errorMessage!,
                                     style: const TextStyle(
                                       color: AppColors.errorRed,
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        if (controller.infoMessage != null) ...[
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(bottom: 14),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryBlue.withAlpha(18),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppColors.primaryBlue.withAlpha(90),
+                              ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(
+                                  Icons.mark_email_read_outlined,
+                                  color: AppColors.primaryBlue,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    controller.infoMessage!,
+                                    style: const TextStyle(
+                                      color: AppColors.primaryBlue,
                                       fontSize: 12.5,
                                       fontWeight: FontWeight.w600,
                                       height: 1.35,
@@ -230,8 +295,11 @@ class _AuthScreenContent extends StatelessWidget {
                           child: TextButton(
                             onPressed: () async {
                               final messenger = ScaffoldMessenger.of(context);
-                              final message = await controller.requestPasswordReset();
-                              messenger.showSnackBar(SnackBar(content: Text(message)));
+                              final message = await controller
+                                  .requestPasswordReset();
+                              messenger.showSnackBar(
+                                SnackBar(content: Text(message)),
+                              );
                             },
                             child: const Text(
                               'Forgot password?',

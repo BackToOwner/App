@@ -27,6 +27,7 @@ class AppNotification {
   final String title;
   final String body;
   final String? reportId;
+  final String? matchId;
   final bool isRead;
   final DateTime? createdAt;
 
@@ -36,29 +37,41 @@ class AppNotification {
     required this.title,
     required this.body,
     this.reportId,
+    this.matchId,
     this.isRead = false,
     this.createdAt,
   });
 
-  factory AppNotification.fromJson(Map<String, dynamic> json) => AppNotification(
-        id: json['id'] as String,
-        type: notificationTypeFromString(json['type'] as String?),
-        title: json['title'] as String? ?? '',
-        body: json['body'] as String? ?? '',
-        reportId: json['reportId'] as String?,
-        isRead: json['isRead'] as bool? ?? false,
-        createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '')?.toLocal(),
-      );
+  factory AppNotification.fromJson(Map<String, dynamic> json) {
+    final meta = json['meta'];
+    final metadata = meta is Map
+        ? Map<String, dynamic>.from(meta)
+        : <String, dynamic>{};
+
+    return AppNotification(
+      id: json['id'] as String,
+      type: notificationTypeFromString(json['type'] as String?),
+      title: json['title'] as String? ?? '',
+      body: json['body'] as String? ?? '',
+      reportId: json['reportId'] as String?,
+      matchId: metadata['matchId']?.toString(),
+      isRead: json['isRead'] as bool? ?? false,
+      createdAt: DateTime.tryParse(
+        json['createdAt'] as String? ?? '',
+      )?.toLocal(),
+    );
+  }
 
   AppNotification copyWith({bool? isRead}) => AppNotification(
-        id: id,
-        type: type,
-        title: title,
-        body: body,
-        reportId: reportId,
-        isRead: isRead ?? this.isRead,
-        createdAt: createdAt,
-      );
+    id: id,
+    type: type,
+    title: title,
+    body: body,
+    reportId: reportId,
+    matchId: matchId,
+    isRead: isRead ?? this.isRead,
+    createdAt: createdAt,
+  );
 
   String get timeAgo {
     final created = createdAt;

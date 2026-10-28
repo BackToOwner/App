@@ -33,11 +33,11 @@ dependencies:
   cupertino_icons: ^1.0.8
   google_fonts: ^6.2.1
   provider: ^6.1.2
-  google_maps_flutter: ^2.6.0
   image_picker: ^1.1.2
   # Backend API (see backend/ in this repo)
   dio: ^5.7.0
   flutter_secure_storage: ^9.2.2
+  app_links: ^7.2.2
 
 dev_dependencies:
   flutter_test:

@@ -15,13 +15,15 @@ class AuthController extends ChangeNotifier {
   bool _obscurePassword = true;
   bool _isLoading = false;
   String? _errorMessage;
+  String? _infoMessage;
 
   // Empty, not pre-filled with a sample address — a placeholder that looks like a real value is
   // the reason people tap Sign In without noticing they typed nothing.
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
-  final TextEditingController idVerificationController = TextEditingController();
+  final TextEditingController idVerificationController =
+      TextEditingController();
   final TextEditingController firstNameController = TextEditingController();
   final TextEditingController lastNameController = TextEditingController();
 
@@ -29,12 +31,14 @@ class AuthController extends ChangeNotifier {
   bool get obscurePassword => _obscurePassword;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  String? get infoMessage => _infoMessage;
   IAuthService get authService => _authService;
 
   void setAuthMode(bool isSignIn) {
     if (_isSignIn != isSignIn) {
       _isSignIn = isSignIn;
       _errorMessage = null;
+      _infoMessage = null;
       notifyListeners();
     }
   }
@@ -45,8 +49,9 @@ class AuthController extends ChangeNotifier {
   }
 
   void clearError() {
-    if (_errorMessage != null) {
+    if (_errorMessage != null || _infoMessage != null) {
       _errorMessage = null;
+      _infoMessage = null;
       notifyListeners();
     }
   }
@@ -82,11 +87,12 @@ class AuthController extends ChangeNotifier {
       }
 
       final idVerification = idVerificationController.text.trim();
-      if (idVerification.isEmpty) return 'Please enter your NIC / ID verification number.';
-      if (!_nicPattern.hasMatch(idVerification)) {
+
+      if (idVerification.isNotEmpty && !_nicPattern.hasMatch(idVerification)) {
         return 'NIC must contain digits only, up to 12 digits.';
       }
     }
+
     return null;
   }
 
@@ -104,7 +110,10 @@ class AuthController extends ChangeNotifier {
 
     try {
       final user = _isSignIn
-          ? await _authService.signIn(emailController.text, passwordController.text)
+          ? await _authService.signIn(
+              emailController.text,
+              passwordController.text,
+            )
           : await _authService.signUp(
               email: emailController.text,
               password: passwordController.text,
@@ -129,7 +138,13 @@ class AuthController extends ChangeNotifier {
       }
       navigator.pushReplacementNamed('/privacy-notice');
       return user;
+    } on EmailConfirmationRequiredException catch (e) {
+      passwordController.clear();
+      _errorMessage = null;
+      _infoMessage = e.message;
+      return null;
     } on ApiException catch (e) {
+      _infoMessage = null;
       _errorMessage = e.message;
       return null;
     } catch (e) {
@@ -174,11 +189,13 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  /// Sends a reset code. Returns a message for the UI to show — including the code itself while
-  /// the backend has no email provider and echoes it in development.
+  /// Sends a reset code and returns a message for the UI.
   Future<String> requestPasswordReset() async {
     final email = emailController.text.trim();
-    if (email.isEmpty) return 'Enter your email address first, then tap Forgot password.';
+
+    if (email.isEmpty) {
+      return 'Enter your email address first, then tap Forgot password.';
+    }
 
     try {
       final devCode = await _authService.requestPasswordReset(email);

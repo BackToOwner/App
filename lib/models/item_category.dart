@@ -1,22 +1,21 @@
-/// A report category, with the emoji and swatch colour the cards draw.
-/// Previously hard-coded in Dart; now served from the `categories` table.
+/// A category loaded from the shared Supabase categories table.
 class ItemCategory {
   final String id;
   final String label;
-  final String emoji;
-  final String bgHex;
+  final String icon;
+  final String color;
 
   const ItemCategory({
     required this.id,
     required this.label,
-    required this.emoji,
-    required this.bgHex,
+    required this.icon,
+    required this.color,
   });
 
   factory ItemCategory.fromJson(Map<String, dynamic> json) => ItemCategory(
-        id: json['id'] as String,
-        label: json['label'] as String? ?? '',
-        emoji: json['emoji'] as String? ?? '📦',
-        bgHex: json['bgHex'] as String? ?? 'F1F5F9',
-      );
+    id: json['id']?.toString() ?? '',
+    label: json['label']?.toString() ?? '',
+    icon: json['icon']?.toString() ?? 'Package',
+    color: json['color']?.toString() ?? '#00D2B4',
+  );
 }

@@ -28,5 +28,16 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.backtoowner.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>backtoowner</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

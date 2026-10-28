@@ -31,3 +31,8 @@ class FieldError {
 
   const FieldError(this.path, this.message);
 }
+
+/// Signup succeeded, but the user must verify their email before signing in.
+class EmailConfirmationRequiredException extends ApiException {
+  const EmailConfirmationRequiredException(super.message);
+}

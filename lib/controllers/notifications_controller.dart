@@ -24,14 +24,30 @@ class NotificationsController extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
     try {
-      final rows = await _api.getList('/notifications', query: {'pageSize': 50});
+      final rows = await _api.getList(
+        '/notifications',
+        query: {'pageSize': 50},
+      );
       _items = rows.map(AppNotification.fromJson).toList();
-      _unread = _items.where((n) => !n.isRead).length;
+      await loadUnreadCount();
     } on ApiException catch (e) {
       _errorMessage = e.message;
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> loadUnreadCount() async {
+    try {
+      final response = await _api.get<Map<String, dynamic>>(
+        '/notifications/unread-count',
+      );
+      final value = response['count'];
+      _unread = value is num ? value.toInt() : int.tryParse('$value') ?? 0;
+      notifyListeners();
+    } on ApiException {
+      // Retain the last known count when offline.
     }
   }
 
@@ -41,21 +57,25 @@ class NotificationsController extends ChangeNotifier {
     if (notification.isRead) return;
 
     final previous = _items;
-    _items = _items.map((n) => n.id == notification.id ? n.copyWith(isRead: true) : n).toList();
-    _unread = _items.where((n) => !n.isRead).length;
+    final previousUnread = _unread;
+    _items = _items
+        .map((n) => n.id == notification.id ? n.copyWith(isRead: true) : n)
+        .toList();
+    if (_unread > 0) _unread--;
     notifyListeners();
 
     try {
       await _api.patch<dynamic>('/notifications/${notification.id}/read');
     } on ApiException {
       _items = previous;
-      _unread = _items.where((n) => !n.isRead).length;
+      _unread = previousUnread;
       notifyListeners();
     }
   }
 
   Future<void> markAllRead() async {
     final previous = _items;
+    final previousUnread = _unread;
     _items = _items.map((n) => n.copyWith(isRead: true)).toList();
     _unread = 0;
     notifyListeners();
@@ -64,7 +84,7 @@ class NotificationsController extends ChangeNotifier {
       await _api.post<dynamic>('/notifications/read-all');
     } on ApiException {
       _items = previous;
-      _unread = _items.where((n) => !n.isRead).length;
+      _unread = previousUnread;
       notifyListeners();
     }
   }

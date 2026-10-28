@@ -37,8 +37,10 @@ class ApiAuthService implements IAuthService {
   @override
   Future<AppUser> signIn(String email, String password) async {
     // Checked here as well as on the server so an obvious mistake costs no round trip.
-    if (email.trim().isEmpty) throw const ApiException('Please enter your email address.');
-    if (password.isEmpty) throw const ApiException('Please enter your password.');
+    if (email.trim().isEmpty)
+      throw const ApiException('Please enter your email address.');
+    if (password.isEmpty)
+      throw const ApiException('Please enter your password.');
 
     final data = await _api.post<Map<String, dynamic>>(
       '/auth/login',
@@ -57,7 +59,8 @@ class ApiAuthService implements IAuthService {
     String? phone,
     String? idVerificationNo,
   }) async {
-    if (email.trim().isEmpty) throw const ApiException('Please enter your email address.');
+    if (email.trim().isEmpty)
+      throw const ApiException('Please enter your email address.');
     if (password.length < 8) {
       throw const ApiException('Password must be at least 8 characters.');
     }
@@ -67,14 +70,40 @@ class ApiAuthService implements IAuthService {
       data: {
         'email': email.trim().toLowerCase(),
         'password': password,
-        if (firstName != null && firstName.trim().isNotEmpty) 'firstName': firstName.trim(),
-        if (lastName != null && lastName.trim().isNotEmpty) 'lastName': lastName.trim(),
+        if (firstName != null && firstName.trim().isNotEmpty)
+          'firstName': firstName.trim(),
+        if (lastName != null && lastName.trim().isNotEmpty)
+          'lastName': lastName.trim(),
         if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
         if (idVerificationNo != null && idVerificationNo.trim().isNotEmpty)
           'idVerificationNo': idVerificationNo.trim(),
       },
       skipAuth: true,
     );
+    if (data['requiresEmailConfirmation'] == true) {
+      throw const EmailConfirmationRequiredException(
+        'Account created successfully! Please check your email and verify your address before signing in.',
+      );
+    }
+
+    return _consumeAuthPayload(data);
+  }
+
+  /// Validates a confirmed-email session with the backend and saves it securely.
+  Future<AppUser> confirmEmail({
+    required String accessToken,
+    required String refreshToken,
+  }) async {
+    if (accessToken.isEmpty || refreshToken.isEmpty) {
+      throw const ApiException('The email confirmation session is incomplete.');
+    }
+
+    final data = await _api.post<Map<String, dynamic>>(
+      '/auth/confirm-email',
+      data: {'accessToken': accessToken, 'refreshToken': refreshToken},
+      skipAuth: true,
+    );
+
     return _consumeAuthPayload(data);
   }
 
